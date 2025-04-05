@@ -86,20 +86,21 @@ func (n *Number) Div(other *Number) *Number {
 	case int:
 		switch v2 := other.value.(type) {
 		case int:
-			return NewNumber(v1 * v2)
+			return NewNumber(float64(v1) / float64(v2))
 		case float64:
-			return NewNumber(float64(v1) * v2)
+			return NewNumber(float64(v1) / v2)
 		}
 	case float64:
 		switch v2 := other.value.(type) {
 		case int:
-			return NewNumber(v1 * float64(v2))
+			return NewNumber(v1 / float64(v2))
 		case float64:
-			return NewNumber(v1 * v2)
+			return NewNumber(v1 / v2)
 		}
 	}
 	return nil
 }
+
 
 func (n Number) String() string {
   return fmt.Sprintf("%v", n.value)
