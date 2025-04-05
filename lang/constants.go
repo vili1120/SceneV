@@ -13,4 +13,6 @@ const (
 
   LPAREN  = "LPAREN"
   RPAREN  = "RPAREN"
+
+  EOF     = "EOF"
 )

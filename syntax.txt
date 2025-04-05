@@ -1,0 +1,35 @@
+var variable_name = value_for_variable
+
+# comments are inside hashtags 
+  this allows for both multiline and single line comments
+#
+
+fn function_name(arg1, arg2) {
+  if value == value2 and condition2 or not condition3 {
+    var variable_name = reassigned_value
+  } elif condition4 {
+    # some code #
+  } else {
+    return something
+  }
+}
+
+# calling the function #
+
+function_name()
+
+# loops #
+
+for i = 0 in 20 -> 2 {
+  # the code here gets run every two steps until i is equal to 20 #
+}
+
+while condition {
+  # some code gets run here until the condition is not true#
+}
+
+# some builtin functions #
+clear() # clears the terminal screen #
+exit() # exits the program #
+append(list_name, value_to_append) # similar to go's append function but you dont have to assign this to a variable #
+# i am not gonna write down every built in function that the tutorial provides because there's a lot of them #

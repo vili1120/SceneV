@@ -4,7 +4,6 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 func NewLexer(fn, text string) *Lexer {
@@ -27,39 +26,41 @@ type Lexer struct {
 
 func (l *Lexer) advance() {
   l.pos.Advance(l.current_char)
-  if l.pos.idx < utf8.RuneCountInString(l.text) {
-    r, _ := utf8.DecodeRuneInString(l.text[l.pos.idx:])
-    l.current_char = string(r)
-  } else {
-    l.current_char = ""
-  }
+	if l.pos.idx < len(l.text) {
+		char := rune(l.text[l.pos.idx])
+		l.current_char = string(char)
+	} else {
+		l.current_char = ""
+	}
 }
+
 
 func (l *Lexer) MakeTokens() ([]Token, *Error) {
   tokens := []Token{}
 
   for l.current_char != "" {
-    if strings.Contains(" \t", l.current_char) {
+    if l.current_char == " " || l.current_char == "\t" {
       l.advance()
+      continue
     } else if strings.Contains(DIGITS, l.current_char) {
       tokens = append(tokens, l.MakeNumbers())
     }else if l.current_char == "+" {
-      tokens = append(tokens, Token{type_: PLUS})
+      tokens = append(tokens, NewToken(PLUS, nil, &l.pos, nil))
       l.advance()
     } else if l.current_char == "-" {
-      tokens = append(tokens, Token{type_: MINUS})
+      tokens = append(tokens, NewToken(MINUS, nil, &l.pos, nil))
       l.advance()
     } else if l.current_char == "*" {
-      tokens = append(tokens, Token{type_: MUL})
+      tokens = append(tokens, NewToken(MUL, nil, &l.pos, nil))
       l.advance()
     } else if l.current_char == "/" {
-      tokens = append(tokens, Token{type_: DIV})
+      tokens = append(tokens, NewToken(DIV, nil, &l.pos, nil))
       l.advance()
     } else if l.current_char == "(" {
-      tokens = append(tokens, Token{type_: LPAREN})
+      tokens = append(tokens, NewToken(LPAREN, nil, &l.pos, nil))
       l.advance()
     } else if l.current_char == ")" {
-      tokens = append(tokens, Token{type_: RPAREN})
+      tokens = append(tokens, NewToken(RPAREN, nil, &l.pos, nil))
       l.advance()
     } else {
       pos_start := l.pos.Copy()
@@ -69,12 +70,14 @@ func (l *Lexer) MakeTokens() ([]Token, *Error) {
     }
   }
 
+  tokens = append(tokens, NewToken(EOF, nil, &l.pos, nil))
   return tokens, nil
 }
 
 func (l *Lexer) MakeNumbers() Token {
   num_str := ""
   dot_count := 0
+  pos_start := l.pos.Copy()
 
   for l.current_char != "" && strings.Contains(DIGITS+".", l.current_char) {
     if l.current_char == "." {
@@ -92,10 +95,10 @@ func (l *Lexer) MakeNumbers() Token {
   if dot_count == 0 {
     num, err := strconv.Atoi(num_str)
     if err != nil { log.Fatal(err) }
-    return Token{type_: INT, value: num}
+    return NewToken(INT, num, &pos_start, &l.pos)
   } else {
     num, err := strconv.ParseFloat(num_str, 64)
     if err != nil { log.Fatal(err) }
-    return Token{type_: FLOAT, value: num}
+    return NewToken(FLOAT, num, &pos_start, &l.pos)
   }
 }

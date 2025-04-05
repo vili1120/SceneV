@@ -1,29 +1,28 @@
 package main
 
 import (
-  "fmt"
-  "vlang-go/lang"
+	"bufio"
+	"fmt"
+	"os"
+	"vlang-go/lang"
 )
 
 func input(prompt string) string {
-  var i string
-  fmt.Print(prompt)
-  fmt.Scanln(&i)
-  return i
+	fmt.Print(prompt)
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	return scanner.Text()
 }
+
 
 func main() {
   for {
     text := input("vlang> ")
-    result, error := lang.Run("<stdin>", text)
-    if error != nil {
-      fmt.Println(error.AsString())
+    result, err := lang.Run("<stdin>", text)
+    if err != nil {
+      fmt.Println(err.AsString())
     } else {
-      var res []string
-			for _, token := range result {
-				res = append(res, fmt.Sprint(token.String()))
-			}
-      fmt.Println(res)
+      fmt.Println(result.String())
     }
   }
 }

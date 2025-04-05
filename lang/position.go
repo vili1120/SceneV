@@ -8,11 +8,11 @@ type Position struct {
   ftxt string
 }
 
-func (p *Position) Advance(current_char string) {
+func (p *Position) Advance(current_char ...string) {
   p.idx += 1
   p.col += 1
 
-  if current_char == "\n" {
+  if len(current_char) > 0 && current_char[0] == "\n" {
     p.ln += 1
     p.col = 0
   }
