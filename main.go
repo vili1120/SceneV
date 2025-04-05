@@ -22,7 +22,7 @@ func main() {
     if err != nil {
       fmt.Println(err.AsString())
     } else {
-      fmt.Println(result.String())
+      fmt.Println(result)
     }
   }
 }

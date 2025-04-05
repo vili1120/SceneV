@@ -3,32 +3,65 @@ package lang
 import "fmt"
 
 type Node interface {
-  String() string
+	String() string
+	GetPosStart() Position
+	GetPosEnd() Position
 }
 
 type NumberNode struct {
-  Tok Token
+	Tok      Token
+	PosStart Position
+	PosEnd   Position
 }
 
 func (nn NumberNode) String() string {
   return fmt.Sprintf("%v", nn.Tok.String())
 }
 
+func (nn *NumberNode) GetPosStart() Position {
+	return nn.PosStart
+}
+
+func (nn *NumberNode) GetPosEnd() Position {
+	return nn.PosEnd
+}
+
 type BinOpNode struct {
-  LeftNode Node
-  OpTok Token
-  RightNode Node
+	LeftNode  Node
+	OpTok     Token
+	RightNode Node
+	PosStart  Position
+	PosEnd    Position
 }
 
 func (bon BinOpNode) String() string {
   return fmt.Sprintf("(%v, %v, %v)", bon.LeftNode.String(), bon.OpTok.String(), bon.RightNode.String())
 }
 
+func (bon *BinOpNode) GetPosStart() Position {
+	return bon.PosStart
+}
+
+func (bon *BinOpNode) GetPosEnd() Position {
+	return bon.PosEnd
+}
+
 type UnaryOpNode struct {
-  OpTok Token
-  Node Node
+	OpTok    Token
+	Node     Node
+	PosStart Position
+	PosEnd   Position
 }
 
 func (uop UnaryOpNode) String() string {
   return fmt.Sprintf("(%v, %v)", uop.OpTok, uop.Node)
 }
+
+func (uop *UnaryOpNode) GetPosStart() Position {
+	return uop.PosStart
+}
+
+func (uop *UnaryOpNode) GetPosEnd() Position {
+	return uop.PosEnd
+}
+

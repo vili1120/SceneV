@@ -48,12 +48,12 @@ func (p *Parser) advance() Token {
 func (p *Parser) Parse() *ParseResult {
 	res := p.expr()
 	if res.error == nil && p.CurrentTok.type_ != EOF {
-    start := p.CurrentTok.PosStart
-    end := p.CurrentTok.PosEnd
-    for p.CurrentTok.type_ != EOF {
-      end = p.CurrentTok.PosEnd
-      p.advance()
-    }
+		start := p.CurrentTok.PosStart
+		end := p.CurrentTok.PosEnd
+		for p.CurrentTok.type_ != EOF {
+			end = p.CurrentTok.PosEnd
+			p.advance()
+		}
 		return res.failure(InvalidSyntaxError(
 			start, end,
 			"Expected '+', '-', '*', or '/'",
@@ -65,33 +65,33 @@ func (p *Parser) Parse() *ParseResult {
 func (p *Parser) factor() *ParseResult {
 	res := &ParseResult{}
 	tok := p.CurrentTok
-  
-  if contains([]string{PLUS, MINUS}, tok.type_) {
-    p.advance()
-    factor := res.register(p.factor())
-    if res.error != nil {
-      return res
-    }
-    return res.success(UnaryOpNode{tok, factor})
-  } else if contains([]string{INT, FLOAT}, tok.type_) {
+
+	if contains([]string{PLUS, MINUS}, tok.type_) {
 		p.advance()
-		return res.success(&NumberNode{Tok: tok})
+		factor := res.register(p.factor())
+		if res.error != nil {
+			return res
+		}
+		return res.success(&UnaryOpNode{tok, factor, tok.PosStart, getEndPos(factor)})
+	} else if contains([]string{INT, FLOAT}, tok.type_) {
+		p.advance()
+		return res.success(&NumberNode{Tok: tok, PosStart: tok.PosStart, PosEnd: tok.PosEnd})
 	} else if tok.type_ == LPAREN {
-    p.advance()
-    expr := res.register(p.expr())
-    if res.error != nil {
-      return res
-    }
-    if p.CurrentTok.type_ != RPAREN {
-      return res.failure(InvalidSyntaxError(
-        p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
-        "Expected ')'",
-      ))
-    } else {
-      p.advance()
-      return res.success(expr)
-    }
-  }
+		p.advance()
+		expr := res.register(p.expr())
+		if res.error != nil {
+			return res
+		}
+		if p.CurrentTok.type_ != RPAREN {
+			return res.failure(InvalidSyntaxError(
+				p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+				"Expected ')'",
+			))
+		} else {
+			p.advance()
+			return res.success(expr)
+		}
+	}
 
 	return res.failure(InvalidSyntaxError(
 		tok.PosStart, tok.PosEnd,
@@ -108,28 +108,38 @@ func (p *Parser) expr() *ParseResult {
 }
 
 func (p *Parser) binOp(fn func() *ParseResult, ops []string) *ParseResult {
-  res := &ParseResult{}
-  left := res.register(fn())
-  if res.error != nil {
-    return res
-  }
+	res := &ParseResult{}
+	left := res.register(fn())
+	if res.error != nil {
+		return res
+	}
 
-  for contains(ops, p.CurrentTok.type_) {
-    opTok := p.CurrentTok
-    p.advance()
-    right := res.register(fn())
-    if res.error != nil {
-      return res
-    }
+	for contains(ops, p.CurrentTok.type_) {
+		opTok := p.CurrentTok
+		p.advance()
+		right := res.register(fn())
+		if res.error != nil {
+			return res
+		}
 
-    left = &BinOpNode{
-      LeftNode:  left,
-      OpTok:     opTok,
-      RightNode: right,
-    }
-  }
+		left = &BinOpNode{
+			LeftNode:  left,
+			OpTok:     opTok,
+			RightNode: right,
+			PosStart:  getStartPos(left),
+			PosEnd:    getEndPos(right),
+		}
+	}
 
-  return res.success(left)
+	return res.success(left)
+}
+
+func getStartPos(n Node) Position {
+	return n.GetPosStart()
+}
+
+func getEndPos(n Node) Position {
+	return n.GetPosEnd()
 }
 
 func contains(arr []string, val string) bool {
@@ -140,4 +150,3 @@ func contains(arr []string, val string) bool {
 	}
 	return false
 }
-

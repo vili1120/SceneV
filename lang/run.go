@@ -1,6 +1,6 @@
 package lang
 
-func Run(fn, text string) (Node, *Error){
+func Run(fn, text string) (any, *Error){
   lexer := NewLexer(fn, text)
   tokens, err := lexer.MakeTokens()
   if err != nil {
@@ -13,6 +13,9 @@ func Run(fn, text string) (Node, *Error){
   if ast.error != nil {
     return nil, ast.error
   }
+
+  interpreter := &Interpreter{}
+  result := interpreter.Visit(ast.node)
   
-  return ast.node, nil
+  return result, nil
 }
