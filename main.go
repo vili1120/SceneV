@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"vlang-go/lang"
+	"SceneV/lang"
 )
 
 func input(prompt string) string {
