@@ -51,8 +51,7 @@ func (l *Lexer) MakeTokens() ([]Token, *Error) {
       tokens = append(tokens, NewToken(MINUS, nil, &l.pos, nil))
       l.advance()
     } else if l.current_char == "*" {
-      tokens = append(tokens, NewToken(MUL, nil, &l.pos, nil))
-      l.advance()
+      tokens = append(tokens, l.MakePower())
     } else if l.current_char == "/" {
       tokens = append(tokens, NewToken(DIV, nil, &l.pos, nil))
       l.advance()
@@ -73,6 +72,19 @@ func (l *Lexer) MakeTokens() ([]Token, *Error) {
   tokens = append(tokens, NewToken(EOF, nil, &l.pos, nil))
   return tokens, nil
 }
+
+func (l *Lexer) MakePower() Token {
+  pos_start := l.pos.Copy()
+  l.advance()
+
+  if l.current_char == "*" {
+    l.advance()
+    return NewToken(POW, nil, &pos_start, &l.pos)
+  }
+
+  return NewToken(MUL, nil, &pos_start, &l.pos)
+}
+
 
 func (l *Lexer) MakeNumbers() Token {
   num_str := ""

@@ -88,6 +88,8 @@ func (i *Interpreter) VisitBinOpNode(node *BinOpNode, context Context) RTResult{
     result, err = leftNum.Mul(rightNum)
   } else if node.OpTok.type_ == DIV {
     result, err = leftNum.Div(rightNum)
+  } else if node.OpTok.type_ == POW {
+    result, err = leftNum.Pow(rightNum)
   }
   if err != nil {
     return res.Failure(*err)

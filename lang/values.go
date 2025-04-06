@@ -1,6 +1,9 @@
 package lang
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 func NewNumber(value any) *Number {
   n := &Number{
@@ -114,6 +117,27 @@ func (n *Number) Div(other *Number) (*Number, *Error) {
 	}
 	return nil, nil
 }
+
+func (n *Number) Pow(other *Number) (*Number, *Error) {
+	switch v1 := n.value.(type) {
+	case int:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(math.Pow(float64(v1), float64(v2))).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(math.Pow(float64(v1), v2)).SetContext(n.Context), nil
+		}
+	case float64:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(math.Pow(v1, float64(v2))).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(math.Pow(v1, v2)).SetContext(n.Context), nil
+		}
+	}
+	return nil, nil
+}
+
 
 func (n Number) String() string {
   return fmt.Sprintf("%v", n.value)

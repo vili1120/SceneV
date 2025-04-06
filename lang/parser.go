@@ -62,18 +62,15 @@ func (p *Parser) Parse() *ParseResult {
 	return res
 }
 
-func (p *Parser) factor() *ParseResult {
+func (p *Parser) power() *ParseResult {
+  return p.binOp(p.atom, []string{POW, POW}, p.factor)
+}
+
+func (p *Parser) atom() *ParseResult {
 	res := &ParseResult{}
 	tok := p.CurrentTok
 
-	if contains([]string{PLUS, MINUS}, tok.type_) {
-		p.advance()
-		factor := res.register(p.factor())
-		if res.error != nil {
-			return res
-		}
-		return res.success(&UnaryOpNode{tok, factor, tok.PosStart, getEndPos(factor)})
-	} else if contains([]string{INT, FLOAT}, tok.type_) {
+  if contains([]string{INT, FLOAT}, tok.type_) {
 		p.advance()
 		return res.success(&NumberNode{Tok: tok, PosStart: tok.PosStart, PosEnd: tok.PosEnd})
 	} else if tok.type_ == LPAREN {
@@ -93,23 +90,42 @@ func (p *Parser) factor() *ParseResult {
 		}
 	}
 
-	return res.failure(InvalidSyntaxError(
-		tok.PosStart, tok.PosEnd,
-		"Expected int or float",
-	))
+  return res.failure(InvalidSyntaxError(
+    p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+    "Expected int, float, '+', '-', '('",
+  ))
+}
+
+func (p *Parser) factor() *ParseResult {
+	res := &ParseResult{}
+	tok := p.CurrentTok
+
+	if contains([]string{PLUS, MINUS}, tok.type_) {
+		p.advance()
+		factor := res.register(p.factor())
+		if res.error != nil {
+			return res
+		}
+		return res.success(&UnaryOpNode{tok, factor, tok.PosStart, getEndPos(factor)})
+	}
+
+	return p.power()
 }
 
 func (p *Parser) term() *ParseResult {
-	return p.binOp(p.factor, []string{MUL, DIV})
+	return p.binOp(p.factor, []string{MUL, DIV}, nil)
 }
 
 func (p *Parser) expr() *ParseResult {
-	return p.binOp(p.term, []string{PLUS, MINUS})
+	return p.binOp(p.term, []string{PLUS, MINUS}, nil)
 }
 
-func (p *Parser) binOp(fn func() *ParseResult, ops []string) *ParseResult {
-	res := &ParseResult{}
-	left := res.register(fn())
+func (p *Parser) binOp(fna func() *ParseResult, ops []string, fnb func() *ParseResult) *ParseResult {
+	if fnb == nil {
+    fnb = fna
+  }
+  res := &ParseResult{}
+	left := res.register(fna())
 	if res.error != nil {
 		return res
 	}
@@ -117,7 +133,7 @@ func (p *Parser) binOp(fn func() *ParseResult, ops []string) *ParseResult {
 	for contains(ops, p.CurrentTok.type_) {
 		opTok := p.CurrentTok
 		p.advance()
-		right := res.register(fn())
+		right := res.register(fnb())
 		if res.error != nil {
 			return res
 		}
