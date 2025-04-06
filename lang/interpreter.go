@@ -70,7 +70,7 @@ func (i *Interpreter) VisitVarAccessNode(node *VarAccessNode, context Context) R
   if value == nil {
     return res.Failure(*RTError(
       node.PosStart, node.PosEnd,
-      fmt.Sprintf("'%v' is not defined", value),
+      fmt.Sprintf("'%v' is not defined", var_name),
       context,
     ))
   }
