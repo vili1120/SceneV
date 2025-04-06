@@ -17,7 +17,7 @@ func input(prompt string) string {
 
 func main() {
   for {
-    text := input("vlang> ")
+    text := input("SceneV> ")
     result, err := lang.Run("<stdin>", text)
     if err != nil {
       fmt.Println(err.AsString())
