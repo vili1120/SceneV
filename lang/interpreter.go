@@ -5,32 +5,70 @@ import (
 	"reflect"
 )
 
+type RTResult struct {
+  value any
+  error *Error
+}
+
+func (rtr *RTResult) Register(res RTResult) any {
+  if res.error != nil {
+    rtr.error = res.error
+  }
+  return res.value
+}
+
+func (rtr *RTResult) Success(value any) RTResult{
+  rtr.value = value
+  return *rtr
+}
+
+func (rtr *RTResult) Failure(error Error) RTResult{
+  rtr.error = &error
+  return *rtr
+}
+
 type Interpreter struct {
   node Node
 }
 
-func (i Interpreter) Visit(node Node) any {
+func (i *Interpreter) Visit(node Node, context Context) RTResult {
 	nodeType := reflect.TypeOf(node)
 	if nodeType.Kind() == reflect.Ptr {
 		nodeType = nodeType.Elem()
 	}
-  MethodName := fmt.Sprintf("Visit%v", nodeType.Name())
-  method := reflect.ValueOf(i).MethodByName(MethodName)
-  if !method.IsValid() {
-  	panic("No " + MethodName + " method defined")
-  }
-  
-  results := method.Call([]reflect.Value{reflect.ValueOf(node)})
-  return results[0].Interface()
+	MethodName := fmt.Sprintf("Visit%v", nodeType.Name())
+	method := reflect.ValueOf(i).MethodByName(MethodName)
+	if !method.IsValid() {
+		panic("No " + MethodName + " method defined")
+	}
+
+	results := method.Call([]reflect.Value{reflect.ValueOf(node), reflect.ValueOf(context)})
+	if len(results) == 0 {
+		panic("Visit method did not return anything")
+	}
+
+	rtResult, ok := results[0].Interface().(RTResult)
+	if !ok {
+		panic(fmt.Sprintf("Visit method returned unexpected type: %T", results[0].Interface()))
+	}
+
+	return rtResult
 }
 
-func (i Interpreter) VisitNumberNode(node *NumberNode) *Number {
-  return NewNumber(node.Tok.value).SetPos(&node.PosStart, &node.PosEnd)
+
+func (i *Interpreter) VisitNumberNode(node *NumberNode, context Context) RTResult {
+  res := RTResult{}
+  return res.Success(
+    NewNumber(node.Tok.value).SetContext(&context).SetPos(&node.PosStart, &node.PosEnd),
+  )
 }
 
-func (i Interpreter) VisitBinOpNode(node *BinOpNode) *Number{
-  left := i.Visit(node.LeftNode)
-  right := i.Visit(node.RightNode)
+func (i *Interpreter) VisitBinOpNode(node *BinOpNode, context Context) RTResult{
+  res := RTResult{}
+  left := res.Register(i.Visit(node.LeftNode, context))
+  if res.error != nil {return res}
+  right := res.Register(i.Visit(node.RightNode, context))
+  if res.error != nil {return res}
 
 	leftNum, ok1 := left.(*Number)
 	rightNum, ok2 := right.(*Number)
@@ -40,31 +78,43 @@ func (i Interpreter) VisitBinOpNode(node *BinOpNode) *Number{
 	}
 
   var result *Number
+  var err *Error
 
   if node.OpTok.type_ == PLUS {
-    result = leftNum.Add(rightNum)
+    result, err = leftNum.Add(rightNum)
   } else if node.OpTok.type_ == MINUS {
-    result = leftNum.Sub(rightNum)
+    result, err = leftNum.Sub(rightNum)
   } else if node.OpTok.type_ == MUL {
-    result = leftNum.Mul(rightNum)
+    result, err = leftNum.Mul(rightNum)
   } else if node.OpTok.type_ == DIV {
-    result = leftNum.Div(rightNum)
+    result, err = leftNum.Div(rightNum)
   }
-
-  return result.SetPos(&node.PosStart, &node.PosEnd)
+  if err != nil {
+    return res.Failure(*err)
+  } else {
+    return res.Success(result.SetPos(&node.PosStart, &node.PosEnd))
+  }
 }
 
-func (i Interpreter) VisitUnaryOpNode(node *UnaryOpNode) *Number {
-  number := i.Visit(node.Node)
+func (i *Interpreter) VisitUnaryOpNode(node *UnaryOpNode, context Context) RTResult {
+  res := RTResult{}
+  number := res.Register(i.Visit(node.Node, context))
+  if res.error != nil {return res}
   num, ok := number.(*Number)
   if !ok {
     panic("Operand must a number")
   }
 
+  var err *Error = nil
+
   if node.OpTok.type_ == MINUS {
-    num = num.Mul(NewNumber(-1))
+    num, err = num.Mul(NewNumber(-1))
   }
 
-  return num.SetPos(&node.PosStart, &node.PosEnd)
+  if err != nil {
+    return res.Failure(*err)
+  } else {
+    return res.Success(num.SetPos(&node.PosStart, &node.PosEnd))
+  }
 }
 

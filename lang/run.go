@@ -15,7 +15,12 @@ func Run(fn, text string) (any, *Error){
   }
 
   interpreter := &Interpreter{}
-  result := interpreter.Visit(ast.node)
+  context := Context{
+    "<program>",
+    nil,
+    nil,
+  }
+  result := interpreter.Visit(ast.node, context)
   
-  return result, nil
+  return result.value, result.error
 }

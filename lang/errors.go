@@ -5,10 +5,10 @@ import (
 	"strings"
 )
 
+// ======= Helper Function =======
 func stringWithArrows(text string, posStart Position, posEnd Position) string {
 	result := ""
 
-	// Find the start of the line
 	idxStart := strings.LastIndex(text[:posStart.idx], "\n")
 	if idxStart == -1 {
 		idxStart = 0
@@ -16,7 +16,6 @@ func stringWithArrows(text string, posStart Position, posEnd Position) string {
 		idxStart += 1
 	}
 
-	// Find the end of the line
 	idxEnd := strings.Index(text[idxStart:], "\n")
 	if idxEnd == -1 {
 		idxEnd = len(text)
@@ -25,48 +24,85 @@ func stringWithArrows(text string, posStart Position, posEnd Position) string {
 	}
 
 	line := text[idxStart:idxEnd]
-
-	// Column positions
 	colStart := posStart.col
 	colEnd := posEnd.col
 
-	// Ensure colEnd is not before colStart
 	if colEnd <= colStart {
 		colEnd = colStart + 1
 	}
 
-	// Build result string with arrows
 	result += line + "\n"
 	result += strings.Repeat(" ", colStart) + strings.Repeat("^", colEnd-colStart) + "\n"
 
 	return strings.ReplaceAll(result, "\t", "")
 }
 
-func max(x, y int) int {
-	if x > y {
-		return x
-	}
-	return y
-}
-
+// ======= Base Error =======
 type Error struct {
-  PosStart Position
-  PosEnd Position
-  ErrorName string
-  Details string
+	PosStart  Position
+	PosEnd    Position
+	ErrorName string
+	Details   string
+  Type string
+  Context *Context
 }
 
-func (e Error) AsString() string {
-  result := fmt.Sprintf("%v: %v", e.ErrorName, e.Details)
-  result += "\n"+fmt.Sprintf("(File: %v, Line: %v)", e.PosStart.fn, e.PosEnd.ln + 1)
-  result += "\n\n" + stringWithArrows(e.PosStart.ftxt, e.PosStart, e.PosEnd)
-  return result
+func (e *Error) AsString() string {
+  if e.Type == "rterror" && e.Context != nil {
+    result := e.GenerateTraceback()
+	  result += fmt.Sprintf("%v: %v", e.ErrorName, e.Details)
+	  result += "\n\n" + stringWithArrows(e.PosStart.ftxt, e.PosStart, e.PosEnd)
+	  return result
+  }
+	result := fmt.Sprintf("%v: %v", e.ErrorName, e.Details)
+	result += "\n" + fmt.Sprintf("(File: %v, Line: %v)", e.PosStart.fn, e.PosEnd.ln+1)
+	result += "\n\n" + stringWithArrows(e.PosStart.ftxt, e.PosStart, e.PosEnd)
+	return result
 }
 
-func IllegalCharError(pos_start, pos_end Position, details string) *Error {
-  return &Error{pos_start, pos_end, "Illegal Character", details}
+func (e *Error) GenerateTraceback() string {
+  result := ""
+  pos := e.PosStart
+  ctx := e.Context
+
+  for ctx != nil {
+    result = fmt.Sprintf("  (File %v, line %v, in %v)\n", pos.fn, pos.ln+1, ctx.DisplayName) + result
+    if ctx.ParentEntryPos == nil {
+      break
+    }
+    pos = *ctx.ParentEntryPos
+    ctx = ctx.Parent
+  }
+  return "Traceback (most recent call last):\n" + result
 }
 
-func InvalidSyntaxError(pos_start, pos_end Position, details string) *Error {
-  return &Error{pos_start, pos_end, "Invalid Syntax", details}
+func IllegalCharError(posStart, posEnd Position, details string) *Error {
+	return &Error{
+		PosStart:  posStart,
+		PosEnd:    posEnd,
+		ErrorName: "Illegal Character",
+		Details:   details,
+    Type: "",
+	}
+}
+
+func InvalidSyntaxError(posStart, posEnd Position, details string) *Error {
+	return &Error{
+		PosStart:  posStart,
+		PosEnd:    posEnd,
+		ErrorName: "Illegal Character",
+		Details:   details,
+    Type: "",
+	}
+}
+
+func RTError(posStart, posEnd Position, details string, context Context) *Error {
+	return &Error{
+		PosStart:  posStart,
+		PosEnd:    posEnd,
+		ErrorName: "Illegal Character",
+		Details:   details,
+    Type: "rterror",
+    Context: &context,
+	}
 }
