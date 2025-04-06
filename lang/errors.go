@@ -90,7 +90,7 @@ func InvalidSyntaxError(posStart, posEnd Position, details string) *Error {
 	return &Error{
 		PosStart:  posStart,
 		PosEnd:    posEnd,
-		ErrorName: "Illegal Character",
+		ErrorName: "Invalid Syntax",
 		Details:   details,
     Type: "",
 	}

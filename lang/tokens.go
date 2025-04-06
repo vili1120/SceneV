@@ -36,3 +36,7 @@ func (t Token) String() string {
     return fmt.Sprintf("%v", t.type_)
   }
 }
+
+func (t Token) Matches(type_, value string) bool {
+  return t.type_ == type_ && t.value == value
+}

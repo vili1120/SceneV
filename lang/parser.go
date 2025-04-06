@@ -12,9 +12,15 @@ func NewParser(tokens []Token) *Parser {
 type ParseResult struct {
 	error *Error
 	node  Node
+  advance_count int
+}
+
+func (pr *ParseResult) register_advancement() {
+  pr.advance_count += 1
 }
 
 func (pr *ParseResult) register(res *ParseResult) Node {
+  pr.advance_count += res.advance_count
 	if res.error != nil {
 		pr.error = res.error
 	}
@@ -27,7 +33,9 @@ func (pr *ParseResult) success(node Node) *ParseResult {
 }
 
 func (pr *ParseResult) failure(err *Error) *ParseResult {
-	pr.error = err
+  if pr.error == nil || pr.advance_count == 0 {
+	  pr.error = err
+  }
 	return pr
 }
 
@@ -52,7 +60,8 @@ func (p *Parser) Parse() *ParseResult {
 		end := p.CurrentTok.PosEnd
 		for p.CurrentTok.type_ != EOF {
 			end = p.CurrentTok.PosEnd
-			p.advance()
+      res.register_advancement()
+		  p.advance()
 		}
 		return res.failure(InvalidSyntaxError(
 			start, end,
@@ -71,9 +80,15 @@ func (p *Parser) atom() *ParseResult {
 	tok := p.CurrentTok
 
   if contains([]string{INT, FLOAT}, tok.type_) {
+    res.register_advancement()
 		p.advance()
 		return res.success(&NumberNode{Tok: tok, PosStart: tok.PosStart, PosEnd: tok.PosEnd})
-	} else if tok.type_ == LPAREN {
+	} else if tok.type_ == IDENTIFIER {
+    res.register_advancement()
+		p.advance()
+    return res.success(&VarAccessNode{tok, tok.PosStart, tok.PosEnd})
+  } else if tok.type_ == LPAREN {
+    res.register_advancement()
 		p.advance()
 		expr := res.register(p.expr())
 		if res.error != nil {
@@ -85,14 +100,15 @@ func (p *Parser) atom() *ParseResult {
 				"Expected ')'",
 			))
 		} else {
-			p.advance()
+      res.register_advancement()
+		  p.advance()
 			return res.success(expr)
 		}
 	}
 
   return res.failure(InvalidSyntaxError(
     p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
-    "Expected int, float, '+', '-', '('",
+    "Expected int, float, identifier, '+', '-', '('",
   ))
 }
 
@@ -101,6 +117,7 @@ func (p *Parser) factor() *ParseResult {
 	tok := p.CurrentTok
 
 	if contains([]string{PLUS, MINUS}, tok.type_) {
+    res.register_advancement()
 		p.advance()
 		factor := res.register(p.factor())
 		if res.error != nil {
@@ -117,7 +134,43 @@ func (p *Parser) term() *ParseResult {
 }
 
 func (p *Parser) expr() *ParseResult {
-	return p.binOp(p.term, []string{PLUS, MINUS}, nil)
+  res := ParseResult{}
+
+  if p.CurrentTok.Matches(KEYWORD, "var") {
+    res.register_advancement()
+		p.advance()
+
+    if p.CurrentTok.type_ != IDENTIFIER {
+      return res.failure(InvalidSyntaxError(
+        p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+        "Expected identifier",
+      ))
+    }
+    var_name := p.CurrentTok
+    res.register_advancement()
+		p.advance()
+
+    if p.CurrentTok.type_ != EQ {
+      return res.failure(InvalidSyntaxError(
+        p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+        "Expected '='",
+      ))
+    }
+    res.register_advancement()
+		p.advance()
+    expr := res.register(p.expr())
+    if res.error != nil { return &res }
+    return res.success(&VarAssignNode{var_name, expr, var_name.PosStart, expr.GetPosEnd()})
+  }
+
+  node := res.register(p.binOp(p.term, []string{PLUS, MINUS}, nil))
+  if res.error != nil {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected 'var', int, float, identifier, '+', '-', '('",
+    ))
+  }
+  return res.success(node)
 }
 
 func (p *Parser) binOp(fna func() *ParseResult, ops []string, fnb func() *ParseResult) *ParseResult {
@@ -132,6 +185,7 @@ func (p *Parser) binOp(fna func() *ParseResult, ops []string, fnb func() *ParseR
 
 	for contains(ops, p.CurrentTok.type_) {
 		opTok := p.CurrentTok
+    res.register_advancement()
 		p.advance()
 		right := res.register(fnb())
 		if res.error != nil {

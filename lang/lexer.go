@@ -44,7 +44,9 @@ func (l *Lexer) MakeTokens() ([]Token, *Error) {
       continue
     } else if strings.Contains(DIGITS, l.current_char) {
       tokens = append(tokens, l.MakeNumbers())
-    }else if l.current_char == "+" {
+    } else if strings.Contains(LETTERS, l.current_char) {
+      tokens = append(tokens, l.MakeIdentifier())
+    } else if l.current_char == "+" {
       tokens = append(tokens, NewToken(PLUS, nil, &l.pos, nil))
       l.advance()
     } else if l.current_char == "-" {
@@ -54,6 +56,9 @@ func (l *Lexer) MakeTokens() ([]Token, *Error) {
       tokens = append(tokens, l.MakePower())
     } else if l.current_char == "/" {
       tokens = append(tokens, NewToken(DIV, nil, &l.pos, nil))
+      l.advance()
+    } else if l.current_char == "=" {
+      tokens = append(tokens, NewToken(EQ, nil, &l.pos, nil))
       l.advance()
     } else if l.current_char == "(" {
       tokens = append(tokens, NewToken(LPAREN, nil, &l.pos, nil))
@@ -113,4 +118,22 @@ func (l *Lexer) MakeNumbers() Token {
     if err != nil { log.Fatal(err) }
     return NewToken(FLOAT, num, &pos_start, &l.pos)
   }
+}
+
+func (l *Lexer) MakeIdentifier() Token {
+  id_str := ""
+  pos_start := l.pos.Copy()
+
+  for l.current_char != "" && strings.Contains(LETTERS_DIGITS+"_", l.current_char) {
+    id_str += l.current_char
+    l.advance()
+  }
+
+  var tok_type string
+  if contains(KEYWORDS, id_str) {
+    tok_type = KEYWORD
+  } else {
+    tok_type = IDENTIFIER
+  }
+  return NewToken(tok_type, id_str, &pos_start, &l.pos)
 }

@@ -26,6 +26,13 @@ func (n *Number) SetPos(pos_start, pos_end *Position) *Number {
   return n
 }
 
+func (n *Number) Copy() *Number {
+  copy := NewNumber(n.value)
+  copy.SetPos(n.PosStart, n.PosEnd)
+  copy.SetContext(n.Context)
+  return copy
+}
+
 func (n *Number) SetContext(context *Context) *Number {
   n.Context = context
   return n

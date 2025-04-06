@@ -63,6 +63,31 @@ func (i *Interpreter) VisitNumberNode(node *NumberNode, context Context) RTResul
   )
 }
 
+func (i *Interpreter) VisitVarAccessNode(node *VarAccessNode, context Context) RTResult {
+  res := RTResult{}
+  var_name := node.VarName.value
+  value := context.SymbolTable.Get(var_name.(string))
+  if value == nil {
+    return res.Failure(*RTError(
+      node.PosStart, node.PosEnd,
+      fmt.Sprintf("'%v' is not defined", value),
+      context,
+    ))
+  }
+
+  value = value.(*Number).Copy().SetPos(&node.PosStart, &node.PosEnd)
+  return res.Success(value)
+}
+
+func (i *Interpreter) VisitVarAssignNode(node *VarAssignNode, context Context) RTResult {
+  res := RTResult{}
+  var_name := node.VarName.value
+  value := res.Register(i.Visit(node.ValueNode, context))
+  if res.error != nil { return res }
+  context.SymbolTable.Set(var_name.(string), value)
+  return res.Success(value)
+}
+
 func (i *Interpreter) VisitBinOpNode(node *BinOpNode, context Context) RTResult{
   res := RTResult{}
   left := res.Register(i.Visit(node.LeftNode, context))

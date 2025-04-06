@@ -26,6 +26,43 @@ func (nn *NumberNode) GetPosEnd() Position {
 	return nn.PosEnd
 }
 
+type VarAccessNode struct {
+	VarName  Token
+	PosStart Position
+	PosEnd   Position
+}
+
+func (van VarAccessNode) String() string {
+  return ""
+}
+
+func (van *VarAccessNode) GetPosStart() Position {
+	return van.PosStart
+}
+
+func (van *VarAccessNode) GetPosEnd() Position {
+	return van.PosEnd
+}
+
+type VarAssignNode struct {
+	VarName     Token
+  ValueNode   Node
+	PosStart    Position
+	PosEnd      Position
+}
+
+func (van VarAssignNode) String() string {
+  return ""
+}
+
+func (van *VarAssignNode) GetPosStart() Position {
+	return van.PosStart
+}
+
+func (van *VarAssignNode) GetPosEnd() Position {
+	return van.PosEnd
+}
+
 type BinOpNode struct {
 	LeftNode  Node
 	OpTok     Token

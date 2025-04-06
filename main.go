@@ -16,13 +16,17 @@ func input(prompt string) string {
 
 
 func main() {
-  for {
-    text := input("SceneV> ")
-    result, err := lang.Run("<stdin>", text)
-    if err != nil {
-      fmt.Println(err.AsString())
-    } else {
-      fmt.Println(result)
-    }
-  }
+	globalSymbolTable := lang.NewSymbolTable()
+  globalSymbolTable.Set("null", lang.NewNumber(0))
+
+	for {
+		text := input("SceneV> ")
+		result, err := lang.Run("<stdin>", text, globalSymbolTable)
+		if err != nil {
+			fmt.Println(err.AsString())
+		} else {
+			fmt.Println(result)
+		}
+	}
 }
+
