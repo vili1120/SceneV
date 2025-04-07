@@ -86,6 +86,16 @@ func IllegalCharError(posStart, posEnd Position, details string) *Error {
 	}
 }
 
+func ExpectedCharError(posStart, posEnd Position, details string) *Error {
+	return &Error{
+		PosStart:  posStart,
+		PosEnd:    posEnd,
+		ErrorName: "Expected Character",
+		Details:   details,
+    Type: "",
+	}
+}
+
 func InvalidSyntaxError(posStart, posEnd Position, details string) *Error {
 	return &Error{
 		PosStart:  posStart,

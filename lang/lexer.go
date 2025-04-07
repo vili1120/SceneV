@@ -57,15 +57,22 @@ func (l *Lexer) MakeTokens() ([]Token, *Error) {
     } else if l.current_char == "/" {
       tokens = append(tokens, NewToken(DIV, nil, &l.pos, nil))
       l.advance()
-    } else if l.current_char == "=" {
-      tokens = append(tokens, NewToken(EQ, nil, &l.pos, nil))
-      l.advance()
     } else if l.current_char == "(" {
       tokens = append(tokens, NewToken(LPAREN, nil, &l.pos, nil))
       l.advance()
     } else if l.current_char == ")" {
       tokens = append(tokens, NewToken(RPAREN, nil, &l.pos, nil))
       l.advance()
+    } else if l.current_char == "!" {
+      tok, err := l.MakeNE()
+      if err != nil { return nil, err }
+      tokens = append(tokens, *tok)
+    } else if l.current_char == "=" {
+      tokens = append(tokens, l.MakeEquals())
+    } else if l.current_char == "<" {
+      tokens = append(tokens, l.MakeLT())
+    } else if l.current_char == ">" {
+      tokens = append(tokens, l.MakeGT())
     } else {
       pos_start := l.pos.Copy()
       char := l.current_char
@@ -136,4 +143,57 @@ func (l *Lexer) MakeIdentifier() Token {
     tok_type = IDENTIFIER
   }
   return NewToken(tok_type, id_str, &pos_start, &l.pos)
+}
+
+func (l *Lexer) MakeNE() (*Token, *Error) {
+  pos_start := l.pos.Copy()
+  l.advance()
+
+  if l.current_char == "=" {
+    l.advance()
+    tok := NewToken(NE, nil, &pos_start, &l.pos)
+    return &tok, nil
+  } else {
+    l.advance()
+    return nil, ExpectedCharError(pos_start, l.pos, "'=' (after '!')")
+  }
+}
+
+func (l *Lexer) MakeEquals() Token {
+  tok_type := EQ
+  pos_start := l.pos.Copy()
+  l.advance()
+
+  if l.current_char == "=" {
+    l.advance()
+    tok_type = EE
+  }
+
+  return NewToken(tok_type, nil, &pos_start, &l.pos)
+}
+
+func (l *Lexer) MakeLT() Token {
+  tok_type := LT
+  pos_start := l.pos.Copy()
+  l.advance()
+
+  if l.current_char == "=" {
+    l.advance()
+    tok_type = LTE
+  }
+
+  return NewToken(tok_type, nil, &pos_start, &l.pos)
+}
+
+func (l *Lexer) MakeGT() Token {
+  tok_type := GT
+  pos_start := l.pos.Copy()
+  l.advance()
+
+  if l.current_char == "=" {
+    l.advance()
+    tok_type = GTE
+  }
+
+  return NewToken(tok_type, nil, &pos_start, &l.pos)
 }

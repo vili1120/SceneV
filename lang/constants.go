@@ -20,6 +20,12 @@ const (
   POW           = "POW"
 
   EQ            = "EQ"
+  EE            = "EE"
+  NE            = "NE"
+  LT            = "LT"
+  GT            = "GT"
+  LTE           = "LTE"
+  GTE           = "GTE"
 
   LPAREN        = "LPAREN"
   RPAREN        = "RPAREN"
@@ -29,4 +35,8 @@ const (
 
 var KEYWORDS = []string{
   "var",
+
+  "and",
+  "or",
+  "not",
 }
