@@ -115,7 +115,24 @@ func (i *Interpreter) VisitBinOpNode(node *BinOpNode, context Context) RTResult{
     result, err = leftNum.Div(rightNum)
   } else if node.OpTok.type_ == POW {
     result, err = leftNum.Pow(rightNum)
+  } else if node.OpTok.type_ == EE {
+    result, err = leftNum.CompEQ(rightNum)
+  } else if node.OpTok.type_ == NE {
+    result, err = leftNum.CompNE(rightNum)
+  } else if node.OpTok.type_ == LT {
+    result, err = leftNum.CompLT(rightNum)
+  } else if node.OpTok.type_ == GT {
+    result, err = leftNum.CompGT(rightNum)
+  } else if node.OpTok.type_ == LTE {
+    result, err = leftNum.CompLTE(rightNum)
+  } else if node.OpTok.type_ == GTE {
+    result, err = leftNum.CompGTE(rightNum)
+  } else if  node.OpTok.Matches(KEYWORD, "and") {
+    result, err = leftNum.And(rightNum)
+  } else if  node.OpTok.Matches(KEYWORD, "or") {
+    result, err = leftNum.Or(rightNum)
   }
+
   if err != nil {
     return res.Failure(*err)
   } else {
@@ -136,6 +153,8 @@ func (i *Interpreter) VisitUnaryOpNode(node *UnaryOpNode, context Context) RTRes
 
   if node.OpTok.type_ == MINUS {
     num, err = num.Mul(NewNumber(-1))
+  } else if node.OpTok.Matches(KEYWORD, "not") {
+    num, err = num.Not()
   }
 
   if err != nil {

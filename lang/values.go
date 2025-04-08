@@ -145,7 +145,160 @@ func (n *Number) Pow(other *Number) (*Number, *Error) {
 	return nil, nil
 }
 
+func (n *Number) CompEQ(other *Number) (*Number, *Error) {
+	switch v1 := n.value.(type) {
+	case int:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 == v2)).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(float64(v1) == v2)).SetContext(n.Context), nil
+		}
+	case float64:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 == float64(v2))).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(v1 == v2)).SetContext(n.Context), nil
+		}
+	}
+	return nil, nil
+}
+
+func (n *Number) CompNE(other *Number) (*Number, *Error) {
+	switch v1 := n.value.(type) {
+	case int:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 != v2)).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(float64(v1) != v2)).SetContext(n.Context), nil
+		}
+	case float64:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 != float64(v2))).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(v1 != v2)).SetContext(n.Context), nil
+		}
+	}
+	return nil, nil
+}
+
+func (n *Number) CompLT(other *Number) (*Number, *Error) {
+	switch v1 := n.value.(type) {
+	case int:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 < v2)).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(float64(v1) < v2)).SetContext(n.Context), nil
+		}
+	case float64:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 < float64(v2))).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(v1 < v2)).SetContext(n.Context), nil
+		}
+	}
+	return nil, nil
+}
+
+func (n *Number) CompGT(other *Number) (*Number, *Error) {
+	switch v1 := n.value.(type) {
+	case int:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 > v2)).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(float64(v1) > v2)).SetContext(n.Context), nil
+		}
+	case float64:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 > float64(v2))).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(v1 > v2)).SetContext(n.Context), nil
+		}
+	}
+	return nil, nil
+}
+
+func (n *Number) CompLTE(other *Number) (*Number, *Error) {
+	switch v1 := n.value.(type) {
+	case int:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 <= v2)).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(float64(v1) <= v2)).SetContext(n.Context), nil
+		}
+	case float64:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 <= float64(v2))).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(v1 <= v2)).SetContext(n.Context), nil
+		}
+	}
+	return nil, nil
+}
+
+func (n *Number) CompGTE(other *Number) (*Number, *Error) {
+	switch v1 := n.value.(type) {
+	case int:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 >= v2)).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(float64(v1) >= v2)).SetContext(n.Context), nil
+		}
+	case float64:
+		switch v2 := other.value.(type) {
+		case int:
+			return NewNumber(BoolToInt(v1 >= float64(v2))).SetContext(n.Context), nil
+		case float64:
+			return NewNumber(BoolToInt(v1 >= v2)).SetContext(n.Context), nil
+		}
+	}
+	return nil, nil
+}
+
+func (n *Number) And(other *Number) (*Number, *Error) {
+	return NewNumber(BoolToInt(NumToBool(n.value) && NumToBool(other.value))).SetContext(n.Context), nil
+}
+
+func (n *Number) Or(other *Number) (*Number, *Error) {
+	return NewNumber(BoolToInt(NumToBool(n.value) || NumToBool(other.value))).SetContext(n.Context), nil
+}
+
+func (n *Number) Not() (*Number, *Error) {
+  if n.value == 0 {
+    return NewNumber(1).SetContext(n.Context), nil
+  }
+  return NewNumber(0).SetContext(n.Context), nil
+}
 
 func (n Number) String() string {
   return fmt.Sprintf("%v", n.value)
+}
+
+func BoolToInt(val bool) int {
+  if val == true {
+    return 1
+  } else {
+    return 0
+  }
+}
+
+func NumToBool(num any) bool {
+	switch v := num.(type) {
+	case int:
+		return v != 0
+	case float64:
+		return v != 0.0
+	default:
+		return false
+	}
 }
