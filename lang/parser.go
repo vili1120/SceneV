@@ -104,11 +104,15 @@ func (p *Parser) atom() *ParseResult {
 		  p.advance()
 			return res.success(expr)
 		}
-	}
+	} else if tok.Matches(KEYWORD, "if") {
+    if_expr := res.register(p.if_expr())
+    if res.error != nil { return res }
+    return res.success(if_expr)
+  }
 
   return res.failure(InvalidSyntaxError(
     p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
-    "Expected int, float, identifier, '+', '-', '('",
+    "Expected 'if', int, float, identifier, '+', '-', '('",
   ))
 }
 
@@ -198,6 +202,108 @@ func (p *Parser) expr() *ParseResult {
     ))
   }
   return res.success(node)
+}
+
+func (p *Parser) if_expr() *ParseResult {
+  res := ParseResult{}
+  cases := [][]Node{}
+  var else_case Node
+
+  if !p.CurrentTok.Matches(KEYWORD, "if") {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected 'if'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  condition := res.register(p.expr())
+  if res.error != nil { return &res }
+
+  if p.CurrentTok.type_ != LBRACE {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected '{'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  expr := res.register(p.expr())
+  if res.error != nil { return &res }
+  cases = append(cases, []Node{condition, expr})
+
+  if p.CurrentTok.type_ != RBRACE {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected '}'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  for p.CurrentTok.Matches(KEYWORD, "elif") {
+    res.register_advancement()
+    p.advance()
+
+    condition := res.register(p.expr())
+    if res.error != nil { return &res }
+
+    if p.CurrentTok.type_ != LBRACE {
+      return res.failure(InvalidSyntaxError(
+        p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+        "Expected '{'",
+      ))
+    }
+    res.register_advancement()
+    p.advance()
+
+    expr := res.register(p.expr())
+    if res.error != nil { return &res }
+    cases = append(cases, []Node{condition, expr})
+
+    if p.CurrentTok.type_ != RBRACE {
+      return res.failure(InvalidSyntaxError(
+        p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+        "Expected '}'",
+      ))
+    }
+    res.register_advancement()
+    p.advance()
+  }
+  if p.CurrentTok.Matches(KEYWORD, "else") {
+    res.register_advancement()
+    p.advance()
+
+    if p.CurrentTok.type_ != LBRACE {
+      return res.failure(InvalidSyntaxError(
+        p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+        "Expected '{'",
+      ))
+    }
+    res.register_advancement()
+    p.advance()
+
+    else_case = res.register(p.expr())
+    if res.error != nil { return &res }
+
+    if p.CurrentTok.type_ != RBRACE {
+      return res.failure(InvalidSyntaxError(
+        p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+        "Expected '}'",
+      ))
+    }
+    res.register_advancement()
+    p.advance()
+  }
+  var pos_end Position
+  if else_case != nil {
+    pos_end = else_case.GetPosEnd()
+  } else {
+    pos_end = cases[len(cases) - 1][0].GetPosEnd()
+  }
+  return res.success(&IfNode{cases, else_case, cases[0][0].GetPosStart(), pos_end})
 }
 
 func (p *Parser) binOp(fna func() *ParseResult, ops []any, fnb func() *ParseResult) *ParseResult {

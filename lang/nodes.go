@@ -26,6 +26,25 @@ func (nn *NumberNode) GetPosEnd() Position {
 	return nn.PosEnd
 }
 
+type IfNode struct {
+	Cases    [][]Node
+  ElseCase Node
+	PosStart Position
+	PosEnd   Position
+}
+
+func (in IfNode) String() string {
+  return ""
+}
+
+func (in *IfNode) GetPosStart() Position {
+	return in.PosStart
+}
+
+func (in *IfNode) GetPosEnd() Position {
+	return in.PosEnd
+}
+
 type VarAccessNode struct {
 	VarName  Token
 	PosStart Position

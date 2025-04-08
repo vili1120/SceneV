@@ -29,6 +29,8 @@ const (
 
   LPAREN        = "LPAREN"
   RPAREN        = "RPAREN"
+  LBRACE        = "LBRACE"
+  RBRACE        = "RBRACE"
 
   EOF           = "EOF"
 )
@@ -39,4 +41,8 @@ var KEYWORDS = []string{
   "and",
   "or",
   "not",
+
+  "if",
+  "elif",
+  "else",
 }

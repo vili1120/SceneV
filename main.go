@@ -23,12 +23,14 @@ func main() {
 
 	for {
 		text := input("SceneV> ")
-		result, err := lang.Run("<stdin>", text, globalSymbolTable)
-		if err != nil {
-			fmt.Println(err.AsString())
-		} else {
-			fmt.Println(result)
-		}
+    if text != "" {
+		  result, err := lang.Run("<stdin>", text, globalSymbolTable)
+		  if err != nil {
+		  	fmt.Println(err.AsString())
+		  } else if result != nil {
+		  	fmt.Println(result)
+		  }
+    }
 	}
 }
 

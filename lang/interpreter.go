@@ -88,6 +88,33 @@ func (i *Interpreter) VisitVarAssignNode(node *VarAssignNode, context Context) R
   return res.Success(value)
 }
 
+func (i *Interpreter) VisitIfNode(node *IfNode, context Context) RTResult {
+  res := RTResult{}
+
+  for _, Case := range node.Cases {
+    condition := Case[0]
+    expr := Case[1]
+
+    cond_val := res.Register(i.Visit(condition, context))
+    if res.error != nil { return res }
+    
+    switch v := cond_val.(type) {
+      case *Number:
+        if v.IsTrue() {
+          expr_val := res.Register(i.Visit(expr, context))
+          if res.error != nil { return res }
+          return res.Success(expr_val)
+        }
+    }
+  }
+  if node.ElseCase != nil {
+    else_val := res.Register(i.Visit(node.ElseCase, context))
+    if res.error != nil { return res }
+    return res.Success(else_val)
+  }
+  return res.Success(nil)
+}
+
 func (i *Interpreter) VisitBinOpNode(node *BinOpNode, context Context) RTResult{
   res := RTResult{}
   left := res.Register(i.Visit(node.LeftNode, context))

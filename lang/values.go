@@ -280,6 +280,10 @@ func (n *Number) Not() (*Number, *Error) {
   return NewNumber(0).SetContext(n.Context), nil
 }
 
+func (n *Number) IsTrue() bool {
+  return NumToBool(n.value)
+}
+
 func (n Number) String() string {
   return fmt.Sprintf("%v", n.value)
 }
