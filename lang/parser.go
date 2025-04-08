@@ -72,7 +72,7 @@ func (p *Parser) Parse() *ParseResult {
 }
 
 func (p *Parser) power() *ParseResult {
-  return p.binOp(p.atom, []string{POW, POW}, p.factor)
+  return p.binOp(p.atom, []any{POW, POW}, p.factor)
 }
 
 func (p *Parser) atom() *ParseResult {
@@ -130,7 +130,34 @@ func (p *Parser) factor() *ParseResult {
 }
 
 func (p *Parser) term() *ParseResult {
-	return p.binOp(p.factor, []string{MUL, DIV}, nil)
+	return p.binOp(p.factor, []any{MUL, DIV}, nil)
+}
+
+func (p *Parser) arith_expr() *ParseResult {
+  return p.binOp(p.term, []any{PLUS, MINUS}, nil)
+}
+
+func (p *Parser) comp_expr() *ParseResult {
+  res := ParseResult{}
+
+  if p.CurrentTok.Matches(KEYWORD, "not") {
+    op_tok := p.CurrentTok
+    res.register_advancement()
+    p.advance()
+
+    node := res.register(p.comp_expr())
+    if res.error != nil { return &res }
+    return res.success(&UnaryOpNode{op_tok, node, op_tok.PosStart, op_tok.PosEnd})
+  }
+
+  node := res.register(p.binOp(p.arith_expr, []any{EE, NE, LT, GT, LTE, GTE}, nil))
+  if res.error != nil {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected 'not', int, float, identifier, '+', '-', '('",
+    ))
+  }
+  return res.success(node)
 }
 
 func (p *Parser) expr() *ParseResult {
@@ -163,17 +190,17 @@ func (p *Parser) expr() *ParseResult {
     return res.success(&VarAssignNode{var_name, expr, var_name.PosStart, expr.GetPosEnd()})
   }
 
-  node := res.register(p.binOp(p.term, []string{PLUS, MINUS}, nil))
+  node := res.register(p.binOp(p.comp_expr, []any{BinOpMatch{KEYWORD, "and"}, BinOpMatch{KEYWORD, "or"}}, nil))
   if res.error != nil {
     return res.failure(InvalidSyntaxError(
       p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
-      "Expected 'var', int, float, identifier, '+', '-', '('",
+      "Expected 'var', 'not', int, float, identifier, '+', '-', '('",
     ))
   }
   return res.success(node)
 }
 
-func (p *Parser) binOp(fna func() *ParseResult, ops []string, fnb func() *ParseResult) *ParseResult {
+func (p *Parser) binOp(fna func() *ParseResult, ops []any, fnb func() *ParseResult) *ParseResult {
 	if fnb == nil {
     fnb = fna
   }
@@ -183,7 +210,7 @@ func (p *Parser) binOp(fna func() *ParseResult, ops []string, fnb func() *ParseR
 		return res
 	}
 
-	for contains(ops, p.CurrentTok.type_) {
+	for tokenMatchesFlexible(&p.CurrentTok, ops) {
 		opTok := p.CurrentTok
     res.register_advancement()
 		p.advance()
@@ -216,6 +243,29 @@ func contains(arr []string, val string) bool {
 	for _, item := range arr {
 		if item == val {
 			return true
+		}
+	}
+	return false
+}
+
+type BinOpMatch struct {
+	Type  string
+	Value string
+}
+
+func tokenMatchesFlexible(tok *Token, ops []any) bool {
+	for _, op := range ops {
+		switch v := op.(type) {
+		case string:
+			if tok.type_ == v {
+				return true
+			}
+		case BinOpMatch:
+			if tok.Matches(v.Type, v.Value) {
+				return true
+			}
+		default:
+			panic("Invalid type in ops slice")
 		}
 	}
 	return false
