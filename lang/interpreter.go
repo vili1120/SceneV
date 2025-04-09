@@ -85,7 +85,7 @@ func (i *Interpreter) VisitVarAssignNode(node *VarAssignNode, context Context) R
   value := res.Register(i.Visit(node.ValueNode, context))
   if res.error != nil { return res }
   context.SymbolTable.Set(var_name.(string), value)
-  return res.Success(value)
+  return res.Success(nil)
 }
 
 func (i *Interpreter) VisitIfNode(node *IfNode, context Context) RTResult {
