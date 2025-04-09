@@ -108,6 +108,14 @@ func (p *Parser) atom() *ParseResult {
     if_expr := res.register(p.if_expr())
     if res.error != nil { return res }
     return res.success(if_expr)
+  } else if tok.Matches(KEYWORD, "for") {
+    for_expr := res.register(p.for_expr())
+    if res.error != nil { return res }
+    return res.success(for_expr)
+  } else if tok.Matches(KEYWORD, "while") {
+    while_expr := res.register(p.while_expr())
+    if res.error != nil { return res }
+    return res.success(while_expr)
   }
 
   return res.failure(InvalidSyntaxError(
@@ -304,6 +312,128 @@ func (p *Parser) if_expr() *ParseResult {
     pos_end = cases[len(cases) - 1][0].GetPosEnd()
   }
   return res.success(&IfNode{cases, else_case, cases[0][0].GetPosStart(), pos_end})
+}
+
+func (p *Parser) for_expr() *ParseResult {
+  res := ParseResult{}
+  
+  if !p.CurrentTok.Matches(KEYWORD, "for") {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected 'for'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  if p.CurrentTok.type_ != IDENTIFIER {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected identifier",
+    ))
+  }
+  varName := p.CurrentTok
+  res.register_advancement()
+  p.advance()
+
+  if p.CurrentTok.type_ != EQ {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected '='",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  startVal := res.register(p.expr())
+  if res.error != nil { return &res }
+
+  if !p.CurrentTok.Matches(KEYWORD, "in") {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected 'in'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  endVal := res.register(p.expr())
+  if res.error != nil { return &res }
+  
+  var stepVal Node
+  if p.CurrentTok.type_ == ARROW {
+    res.register_advancement()
+    p.advance()
+
+    stepVal = res.register(p.expr())
+    if res.error != nil { return &res }
+  } else {
+    stepVal = nil
+  }
+
+  if p.CurrentTok.type_ != LBRACE {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected '{'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+  
+  body := res.register(p.expr())
+  if res.error != nil { return nil }
+
+  if p.CurrentTok.type_ != RBRACE {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected '}'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  posStart := varName.PosStart
+  posEnd := body.GetPosEnd()
+  return res.success(&ForNode{VarNameTok: varName, StartVal: startVal, EndVal: endVal, StepVal: stepVal, BodyNode: body, PosStart: posStart, PosEnd: posEnd})
+}
+
+func (p *Parser) while_expr() *ParseResult {
+  res := ParseResult{}
+
+  if !p.CurrentTok.Matches(KEYWORD, "while") {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected 'while'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  condition := res.register(p.expr())
+  if res.error != nil { return &res }
+
+  if p.CurrentTok.type_ != LBRACE {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected '{'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  body := res.register(p.expr())
+  if res.error != nil { return &res }
+
+  if p.CurrentTok.type_ != RBRACE {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected '}'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  return res.success(&WhileNode{Cond: condition, BodyNode: body, PosStart: condition.GetPosStart(), PosEnd: body.GetPosEnd()})
 }
 
 func (p *Parser) binOp(fna func() *ParseResult, ops []any, fnb func() *ParseResult) *ParseResult {

@@ -45,6 +45,47 @@ func (in *IfNode) GetPosEnd() Position {
 	return in.PosEnd
 }
 
+type ForNode struct {
+	VarNameTok Token
+  StartVal Node
+  EndVal Node
+  StepVal Node
+  BodyNode Node
+	PosStart Position
+	PosEnd   Position
+}
+
+func (in ForNode) String() string {
+  return ""
+}
+
+func (in *ForNode) GetPosStart() Position {
+	return in.PosStart
+}
+
+func (in *ForNode) GetPosEnd() Position {
+	return in.PosEnd
+}
+
+type WhileNode struct {
+	Cond     Node
+  BodyNode Node
+	PosStart Position
+	PosEnd   Position
+}
+
+func (in WhileNode) String() string {
+  return ""
+}
+
+func (in *WhileNode) GetPosStart() Position {
+	return in.PosStart
+}
+
+func (in *WhileNode) GetPosEnd() Position {
+	return in.PosEnd
+}
+
 type VarAccessNode struct {
 	VarName  Token
 	PosStart Position

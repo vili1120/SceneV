@@ -50,7 +50,7 @@ func (l *Lexer) MakeTokens() ([]Token, *Error) {
       tokens = append(tokens, NewToken(PLUS, nil, &l.pos, nil))
       l.advance()
     } else if l.current_char == "-" {
-      tokens = append(tokens, NewToken(MINUS, nil, &l.pos, nil))
+      tokens = append(tokens, l.MakeArrow())
       l.advance()
     } else if l.current_char == "*" {
       tokens = append(tokens, l.MakePower())
@@ -199,6 +199,19 @@ func (l *Lexer) MakeGT() Token {
   if l.current_char == "=" {
     l.advance()
     tok_type = GTE
+  }
+
+  return NewToken(tok_type, nil, &pos_start, &l.pos)
+}
+
+func (l *Lexer) MakeArrow() Token {
+  tok_type := MINUS
+  pos_start := l.pos.Copy()
+  l.advance()
+
+  if l.current_char == ">" {
+    l.advance()
+    tok_type = ARROW
   }
 
   return NewToken(tok_type, nil, &pos_start, &l.pos)

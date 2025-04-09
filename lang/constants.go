@@ -32,6 +32,8 @@ const (
   LBRACE        = "LBRACE"
   RBRACE        = "RBRACE"
 
+  ARROW         = "ARROW"
+
   EOF           = "EOF"
 )
 
@@ -45,4 +47,8 @@ var KEYWORDS = []string{
   "if",
   "elif",
   "else",
+
+  "while",
+  "for",
+  "in",
 }

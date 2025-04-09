@@ -115,6 +115,62 @@ func (i *Interpreter) VisitIfNode(node *IfNode, context Context) RTResult {
   return res.Success(nil)
 }
 
+func (i *Interpreter) VisitForNode(node *ForNode, context Context) RTResult {
+  res := RTResult{}
+
+  startVal := res.Register(i.Visit(node.StartVal, context))
+  if res.error != nil { return res }
+  startNum := startVal.(*Number)
+
+  endVal := res.Register(i.Visit(node.EndVal, context))
+  if res.error != nil { return res }
+  endNum := endVal.(*Number)
+  
+  var stepNum *Number
+  if node.StepVal != nil {
+    stepVal := res.Register(i.Visit(node.StepVal, context))
+    if res.error != nil { return res }
+    stepNum = stepVal.(*Number)
+  } else {
+    stepNum = NewNumber(1)
+  }
+
+  IVal := startNum.value.(int)
+  StepVal := stepNum.value.(int)
+  EndVal := endNum.value.(int)
+  
+  var condition func() bool
+  if IVal >= 0.0 {
+    condition = func() bool { return IVal <= EndVal }
+  } else {
+    condition = func() bool { return IVal >= EndVal }
+  }
+  
+  for condition() {
+    context.SymbolTable.Set(node.VarNameTok.value.(string), NewNumber(IVal))
+    IVal += StepVal
+
+    res.Register(i.Visit(node.BodyNode, context))
+    if res.error != nil { return res }
+  }
+  return res.Success(nil)
+}
+
+func (i *Interpreter) VisitWhileNode(node *WhileNode, context Context) RTResult {
+  res := RTResult{}
+
+  for true{
+    condition := res.Register(i.Visit(node.Cond, context)).(*Number)
+    if res.error != nil { return res }
+
+    if !condition.IsTrue() { break }
+
+    res.Register(i.Visit(node.BodyNode, context))
+    if res.error != nil { return res }
+  }
+  return res.Success(nil)
+}
+
 func (i *Interpreter) VisitBinOpNode(node *BinOpNode, context Context) RTResult{
   res := RTResult{}
   left := res.Register(i.Visit(node.LeftNode, context))

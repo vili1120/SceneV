@@ -5,6 +5,10 @@ import (
 	"math"
 )
 
+type num interface {
+  
+}
+
 func NewNumber(value any) *Number {
   n := &Number{
     value: value,
