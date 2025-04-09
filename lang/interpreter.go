@@ -140,12 +140,11 @@ func (i *Interpreter) VisitForNode(node *ForNode, context Context) RTResult {
   EndVal := endNum.value.(int)
   
   var condition func() bool
-  if IVal >= 0.0 {
+  if StepVal >= 0 {
     condition = func() bool { return IVal <= EndVal }
   } else {
     condition = func() bool { return IVal >= EndVal }
   }
-  
   for condition() {
     context.SymbolTable.Set(node.VarNameTok.value.(string), NewNumber(IVal))
     IVal += StepVal

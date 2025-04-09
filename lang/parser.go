@@ -120,7 +120,7 @@ func (p *Parser) atom() *ParseResult {
 
   return res.failure(InvalidSyntaxError(
     p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
-    "Expected 'if', int, float, identifier, '+', '-', '('",
+    "Expected int, float, identifier, '+', '-', '('",
   ))
 }
 

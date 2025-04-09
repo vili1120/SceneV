@@ -51,7 +51,6 @@ func (l *Lexer) MakeTokens() ([]Token, *Error) {
       l.advance()
     } else if l.current_char == "-" {
       tokens = append(tokens, l.MakeArrow())
-      l.advance()
     } else if l.current_char == "*" {
       tokens = append(tokens, l.MakePower())
     } else if l.current_char == "/" {

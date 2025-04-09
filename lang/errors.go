@@ -110,7 +110,7 @@ func RTError(posStart, posEnd Position, details string, context Context) *Error 
 	return &Error{
 		PosStart:  posStart,
 		PosEnd:    posEnd,
-		ErrorName: "Illegal Character",
+		ErrorName: "Runtime Error",
 		Details:   details,
     Type: "rterror",
     Context: &context,
