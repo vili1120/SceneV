@@ -5,9 +5,106 @@ import (
 	"math"
 )
 
-type num interface {
-  
+type Value struct {
+  PosStart *Position
+  PosEnd *Position
+  Context *Context
 }
+
+func (v *Value) SetPos(pos_start, pos_end *Position) *Value {
+  v.PosStart = pos_start
+  v.PosEnd = pos_end
+  return v
+}
+
+func (v *Value) Copy() {
+  panic("No copy method defined")
+}
+
+func (v *Value) SetContext(context *Context) *Value {
+  v.Context = context
+  return v
+}
+
+func (v *Value) Add(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) Sub(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) Mul(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) Div(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) Pow(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) CompEQ(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) CompNE(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) CompLT(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) CompGT(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) CompLTE(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) CompGTE(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) And(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) Or(other *Value) (*Value, *Error) {
+  return nil, v.IllegalOperation(other)
+}
+
+func (v *Value) Not() (*Value, *Error) {
+  return nil, v.IllegalOperation(v)
+}
+
+func (v *Value) Execute(args []any) RTResult {
+  res := RTResult{}
+  return res.Failure(*v.IllegalOperation(nil))
+}
+
+func (v *Value) IsTrue() bool {
+  return false
+}
+
+func (v *Value) IllegalOperation(other any) *Error {
+  if other == nil { other = v }
+  switch o := other.(type) {
+    case *Number:
+      return RTError(
+        *v.PosStart, *o.PosEnd,
+        "Illegal operation",
+        *v.Context,
+      )
+  }
+  return nil
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 func NewNumber(value any) *Number {
   n := &Number{
@@ -19,6 +116,7 @@ func NewNumber(value any) *Number {
 }
 
 type Number struct {
+  Value
   value any
   PosStart, PosEnd *Position
   Context *Context
@@ -42,239 +140,280 @@ func (n *Number) SetContext(context *Context) *Number {
   return n
 }
 
-func (n *Number) Add(other *Number) (*Number, *Error) {
-	switch v1 := n.value.(type) {
-	case int:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(v1 + v2).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(float64(v1) + v2).SetContext(n.Context), nil
-		}
-	case float64:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(v1 + float64(v2)).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(v1 + v2).SetContext(n.Context), nil
-		}
-	}
-	return nil, nil
-}
-
-func (n *Number) Sub(other *Number) (*Number, *Error) {
-	switch v1 := n.value.(type) {
-	case int:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(v1 - v2).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(float64(v1) - v2).SetContext(n.Context), nil
-		}
-	case float64:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(v1 - float64(v2)).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(v1 - v2).SetContext(n.Context), nil
-		}
-	}
-	return nil, nil
-}
-
-func (n *Number) Mul(other *Number) (*Number, *Error) {
-	switch v1 := n.value.(type) {
-	case int:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(v1 * v2).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(float64(v1) * v2).SetContext(n.Context), nil
-		}
-	case float64:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(v1 * float64(v2)).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(v1 * v2).SetContext(n.Context), nil
-		}
-	}
-	return nil, nil
-}
-
-func (n *Number) Div(other *Number) (*Number, *Error) {
-  if other.value == 0 || other.value == 0.0 {
-    return nil, RTError(
-      *other.PosStart, *other.PosEnd,
-      "Division by zero",
-      *n.Context,
-    )
+func (n *Number) Add(other any) (*Number, *Error) {
+  switch o := other.(type) {
+    case *Number:
+	    switch v1 := n.value.(type) {
+	    case int:
+	    	switch v2 := o.value.(type) {
+	    	case int:
+	    		return NewNumber(v1 + v2).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(float64(v1) + v2).SetContext(n.Context), nil
+	    	}
+	    case float64:
+	    	switch v2 := o.value.(type) {
+	    	case int:
+	    		return NewNumber(v1 + float64(v2)).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(v1 + v2).SetContext(n.Context), nil
+	    	}
+	    }
   }
-	switch v1 := n.value.(type) {
-	case int:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(float64(v1) / float64(v2)).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(float64(v1) / v2).SetContext(n.Context), nil
-		}
-	case float64:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(v1 / float64(v2)).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(v1 / v2).SetContext(n.Context), nil
-		}
-	}
-	return nil, nil
+  return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) Pow(other *Number) (*Number, *Error) {
-	switch v1 := n.value.(type) {
-	case int:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(math.Pow(float64(v1), float64(v2))).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(math.Pow(float64(v1), v2)).SetContext(n.Context), nil
-		}
-	case float64:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(math.Pow(v1, float64(v2))).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(math.Pow(v1, v2)).SetContext(n.Context), nil
-		}
-	}
-	return nil, nil
+func (n *Number) Sub(other any) (*Number, *Error) {
+  switch o := other.(type) {
+    case *Number:
+	    switch v1 := n.value.(type) {
+	    case int:
+	    	switch v2 := o.value.(type) {
+	    	case int:
+	    		return NewNumber(v1 - v2).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(float64(v1) - v2).SetContext(n.Context), nil
+	    	}
+	    case float64:
+	    	switch v2 := o.value.(type) {
+	    	case int:
+	    		return NewNumber(v1 - float64(v2)).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(v1 - v2).SetContext(n.Context), nil
+	    	}
+	    }
+  }
+  return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompEQ(other *Number) (*Number, *Error) {
-	switch v1 := n.value.(type) {
-	case int:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 == v2)).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(float64(v1) == v2)).SetContext(n.Context), nil
-		}
-	case float64:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 == float64(v2))).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(v1 == v2)).SetContext(n.Context), nil
-		}
-	}
-	return nil, nil
+func (n *Number) Mul(other any) (*Number, *Error) {
+  switch o := other.(type) {
+    case *Number:
+	    switch v1 := n.value.(type) {
+	    case int:
+	    	switch v2 := o.value.(type) {
+	    	case int:
+	    		return NewNumber(v1 * v2).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(float64(v1) * v2).SetContext(n.Context), nil
+	    	}
+	    case float64:
+	    	switch v2 := o.value.(type) {
+	    	case int:
+	    		return NewNumber(v1 * float64(v2)).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(v1 * v2).SetContext(n.Context), nil
+	    	}
+	    }
+  }
+  return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompNE(other *Number) (*Number, *Error) {
-	switch v1 := n.value.(type) {
-	case int:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 != v2)).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(float64(v1) != v2)).SetContext(n.Context), nil
-		}
-	case float64:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 != float64(v2))).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(v1 != v2)).SetContext(n.Context), nil
-		}
-	}
-	return nil, nil
+func (n *Number) Div(other any) (*Number, *Error) {
+  switch o := other.(type) {
+    case *Number:
+      if o.value == 0 || o.value == 0.0 {
+        return nil, RTError(
+          *o.PosStart, *o.PosEnd,
+          "Division by zero",
+          *n.Context,
+        )
+      }
+	    switch v1 := n.value.(type) {
+	    case int:
+	    	switch v2 := o.value.(type) {
+	    	case int:
+	    		return NewNumber(float64(v1) / float64(v2)).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(float64(v1) / v2).SetContext(n.Context), nil
+	    	}
+	    case float64:
+	    	switch v2 := o.value.(type) {
+	    	case int:
+	    		return NewNumber(v1 / float64(v2)).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(v1 / v2).SetContext(n.Context), nil
+	    	}
+	    }
+  }
+  return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompLT(other *Number) (*Number, *Error) {
-	switch v1 := n.value.(type) {
-	case int:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 < v2)).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(float64(v1) < v2)).SetContext(n.Context), nil
-		}
-	case float64:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 < float64(v2))).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(v1 < v2)).SetContext(n.Context), nil
-		}
-	}
-	return nil, nil
+func (n *Number) Pow(other any) (*Number, *Error) {
+  switch o := other.(type) {
+    case *Number:
+	    switch v1 := n.value.(type) {
+	    case int:
+	    	switch v2 := o.value.(type) {
+	    	case int:
+	    		return NewNumber(math.Pow(float64(v1), float64(v2))).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(math.Pow(float64(v1), v2)).SetContext(n.Context), nil
+	    	}
+	    case float64:
+	    	switch v2 := o.value.(type) {
+	    	case int:
+	    		return NewNumber(math.Pow(v1, float64(v2))).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(math.Pow(v1, v2)).SetContext(n.Context), nil
+	    	}
+	    }
+  }
+  return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompGT(other *Number) (*Number, *Error) {
-	switch v1 := n.value.(type) {
-	case int:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 > v2)).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(float64(v1) > v2)).SetContext(n.Context), nil
-		}
-	case float64:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 > float64(v2))).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(v1 > v2)).SetContext(n.Context), nil
-		}
-	}
-	return nil, nil
+func (n *Number) CompEQ(other any) (*Number, *Error) {
+  switch other := other.(type) {
+    case *Number:
+	    switch v1 := n.value.(type) {
+	    case int:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 == v2)).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(float64(v1) == v2)).SetContext(n.Context), nil
+	    	}
+	    case float64:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 == float64(v2))).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(v1 == v2)).SetContext(n.Context), nil
+	    	}
+	    }
+  }
+  return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompLTE(other *Number) (*Number, *Error) {
-	switch v1 := n.value.(type) {
-	case int:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 <= v2)).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(float64(v1) <= v2)).SetContext(n.Context), nil
-		}
-	case float64:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 <= float64(v2))).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(v1 <= v2)).SetContext(n.Context), nil
-		}
-	}
-	return nil, nil
+func (n *Number) CompNE(other any) (*Number, *Error) {
+  switch other := other.(type) {
+    case *Number:
+	    switch v1 := n.value.(type) {
+	    case int:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 != v2)).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(float64(v1) != v2)).SetContext(n.Context), nil
+	    	}
+	    case float64:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 != float64(v2))).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(v1 != v2)).SetContext(n.Context), nil
+	    	}
+	    }
+  }
+  return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompGTE(other *Number) (*Number, *Error) {
-	switch v1 := n.value.(type) {
-	case int:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 >= v2)).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(float64(v1) >= v2)).SetContext(n.Context), nil
-		}
-	case float64:
-		switch v2 := other.value.(type) {
-		case int:
-			return NewNumber(BoolToInt(v1 >= float64(v2))).SetContext(n.Context), nil
-		case float64:
-			return NewNumber(BoolToInt(v1 >= v2)).SetContext(n.Context), nil
-		}
-	}
-	return nil, nil
+func (n *Number) CompLT(other any) (*Number, *Error) {
+  switch other := other.(type) {
+    case *Number:
+	    switch v1 := n.value.(type) {
+	    case int:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 < v2)).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(float64(v1) < v2)).SetContext(n.Context), nil
+	    	}
+	    case float64:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 < float64(v2))).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(v1 < v2)).SetContext(n.Context), nil
+	    	}
+	    }
+  }
+  return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) And(other *Number) (*Number, *Error) {
-	return NewNumber(BoolToInt(NumToBool(n.value) && NumToBool(other.value))).SetContext(n.Context), nil
+func (n *Number) CompGT(other any) (*Number, *Error) {
+  switch other := other.(type) {
+    case *Number:
+	    switch v1 := n.value.(type) {
+	    case int:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 > v2)).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(float64(v1) > v2)).SetContext(n.Context), nil
+	    	}
+	    case float64:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 > float64(v2))).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(v1 > v2)).SetContext(n.Context), nil
+	    	}
+	    }
+  }
+  return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) Or(other *Number) (*Number, *Error) {
-	return NewNumber(BoolToInt(NumToBool(n.value) || NumToBool(other.value))).SetContext(n.Context), nil
+func (n *Number) CompLTE(other any) (*Number, *Error) {
+  switch other := other.(type) {
+    case *Number:
+	    switch v1 := n.value.(type) {
+	    case int:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 <= v2)).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(float64(v1) <= v2)).SetContext(n.Context), nil
+	    	}
+	    case float64:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 <= float64(v2))).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(v1 <= v2)).SetContext(n.Context), nil
+	    	}
+	    }
+  }
+  return nil, n.Value.IllegalOperation(other)
+}
+
+func (n *Number) CompGTE(other any) (*Number, *Error) {
+  switch other := other.(type) {
+    case *Number:
+	    switch v1 := n.value.(type) {
+	    case int:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 >= v2)).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(float64(v1) >= v2)).SetContext(n.Context), nil
+	    	}
+	    case float64:
+	    	switch v2 := other.value.(type) {
+	    	case int:
+	    		return NewNumber(BoolToInt(v1 >= float64(v2))).SetContext(n.Context), nil
+	    	case float64:
+	    		return NewNumber(BoolToInt(v1 >= v2)).SetContext(n.Context), nil
+	    	}
+	    }
+  }
+  return nil, n.Value.IllegalOperation(other)
+}
+
+func (n *Number) And(other any) (*Number, *Error) {
+  switch other := other.(type) {
+    case *Number:
+	  return NewNumber(BoolToInt(NumToBool(n.value) && NumToBool(other.value))).SetContext(n.Context), nil
+  }
+  return nil, n.Value.IllegalOperation(other)
+}
+
+func (n *Number) Or(other any) (*Number, *Error) {
+  switch other := other.(type) {
+    case *Number:
+	  return NewNumber(BoolToInt(NumToBool(n.value) || NumToBool(other.value))).SetContext(n.Context), nil
+  }
+  return nil, n.Value.IllegalOperation(other)
 }
 
 func (n *Number) Not() (*Number, *Error) {
@@ -309,4 +448,74 @@ func NumToBool(num any) bool {
 	default:
 		return false
 	}
+}
+
+///////////////////////////////////////////////////////////////////////////
+
+func NewFunction(name *string, body Node, argNames []string) *Function {
+  var Name string
+  if name == nil {
+    Name = "<anonymous>"
+  } else {
+    Name = *name
+  }
+  f := &Function{
+    Name: Name,
+    BodyNode: body,
+    ArgNames: argNames,
+  }
+  f.SetPos(nil, nil)
+  f.SetContext(nil)
+  return f
+}
+
+type Function struct {
+  Value
+  Name string
+  BodyNode Node
+  ArgNames []string
+}
+
+func (f *Function) Execute(args []Value) (RTResult){
+  res := RTResult{}
+  interpreter := Interpreter{}
+
+  newCtx := Context{DisplayName: f.Name, Parent: f.Context, ParentEntryPos: f.PosStart}
+  newCtx.SymbolTable = &SymbolTable{Parent: newCtx.Parent.SymbolTable}
+
+  if len(args) > len(f.ArgNames) {
+    return res.Failure(*RTError(
+      *f.PosStart, *f.PosEnd,
+      fmt.Sprintf("%v too few args passed into '%v'", len(f.ArgNames)-len(args), f.Name),
+      *f.Context,
+    ))
+  }
+  if len(args) < len(f.ArgNames) {
+    return res.Failure(*RTError(
+      *f.PosStart, *f.PosEnd,
+      fmt.Sprintf("%v too many args passed into '%v'", len(f.ArgNames)-len(args), f.Name),
+      *f.Context,
+    ))
+  }
+
+  for i := range len(args) {
+    argName := f.ArgNames[i]
+    argVal := args[i]
+    argVal.SetContext(&newCtx)
+    newCtx.SymbolTable.Set(argName, argVal)
+  }
+  Val := res.Register(interpreter.Visit(f.BodyNode, newCtx))
+  if res.error != nil { return res }
+  return res.Success(Val)
+}
+
+func (f *Function) Copy() *Function {
+  copy := Function{Name: f.Name, BodyNode: f.BodyNode, ArgNames: f.ArgNames}
+  copy.SetContext(f.Context)
+  copy.SetPos(f.PosStart, f.PosEnd)
+  return &copy
+}
+
+func (f *Function) String() string {
+  return fmt.Sprintf("<function %v>", f.Name)
 }

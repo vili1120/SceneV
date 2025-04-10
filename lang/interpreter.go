@@ -170,6 +170,46 @@ func (i *Interpreter) VisitWhileNode(node *WhileNode, context Context) RTResult 
   return res.Success(nil)
 }
 
+func (i *Interpreter) VisitFuncDefNode(node *FuncDefNode, context Context) RTResult {
+  res := RTResult{}
+  var funcName *string
+  if node.VarNameTok != nil {
+    funcName = node.VarNameTok.value.(*string)
+  } else {
+    funcName = nil
+  }
+  body := node.BodyNode
+  var arg_names []string
+  for _, v := range node.ArgNameToks {
+    arg_names = append(arg_names, v.value.(string))
+  }
+
+  funcValue := NewFunction(funcName, body, arg_names).SetContext(&context).SetPos(&node.PosStart, &node.PosEnd)
+
+  if node.VarNameTok != nil {
+    context.SymbolTable.Set(*funcName, funcValue)
+  }
+
+  return res.Success(funcValue)
+}
+
+func (i *Interpreter) VisitCallNode(node *CallNode, context Context) RTResult {
+  res := RTResult{}
+  args := []any{}
+
+  valueToCall := res.Register(i.Visit(node.NodeToCall, context))
+  if res.error != nil { return res }
+  CallVal := valueToCall.(*Function).Copy().SetPos(&node.PosStart, &node.PosEnd)
+
+  for _, argNode := range node.ArgNodes {
+    args = append(args, res.Register(i.Visit(argNode, context)))
+    if res.error != nil { return res }
+  }
+  returnVal := res.Register(CallVal.Execute(args))
+  if res.error != nil { return res }
+  return res.Success(returnVal)
+}
+
 func (i *Interpreter) VisitBinOpNode(node *BinOpNode, context Context) RTResult{
   res := RTResult{}
   left := res.Register(i.Visit(node.LeftNode, context))

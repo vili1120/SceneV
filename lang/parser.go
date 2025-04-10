@@ -72,7 +72,50 @@ func (p *Parser) Parse() *ParseResult {
 }
 
 func (p *Parser) power() *ParseResult {
-  return p.binOp(p.atom, []any{POW, POW}, p.factor)
+  return p.binOp(p.call, []any{POW, POW}, p.factor)
+}
+
+func (p *Parser) call() *ParseResult {
+  res := ParseResult{}
+  atom := res.register(p.atom())
+  if res.error != nil { return &res }
+
+  if p.CurrentTok.type_ == LPAREN {
+    res.register_advancement()
+    p.advance()
+    var arg_nodes []Node
+
+    if p.CurrentTok.type_ == RPAREN {
+      res.register_advancement()
+      p.advance()
+    } else {
+      arg_nodes = append(arg_nodes, res.register(p.expr()))
+      if res.error != nil {
+        return res.failure(InvalidSyntaxError(
+          p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+          "Expected ')', 'var', 'if', 'for', 'while', 'not', int, float, identifier, '+', '-', '('",
+        ))
+      }
+      for p.CurrentTok.type_ == COMMA {
+        res.register_advancement()
+        p.advance()
+
+        arg_nodes = append(arg_nodes, res.register(p.expr()))
+        if res.error != nil { return &res }
+      }
+      if p.CurrentTok.type_ != RPAREN {
+        return res.failure(InvalidSyntaxError(
+          p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+          "Expected ',' or ')'",
+        ))
+      }
+      res.register_advancement()
+      p.advance()
+    }
+    cn := &CallNode{NodeToCall: atom, ArgNodes: arg_nodes}
+    return res.success(cn.SetPos())
+  }
+  return res.success(atom)
 }
 
 func (p *Parser) atom() *ParseResult {
@@ -82,11 +125,13 @@ func (p *Parser) atom() *ParseResult {
   if contains([]string{INT, FLOAT}, tok.type_) {
     res.register_advancement()
 		p.advance()
-		return res.success(&NumberNode{Tok: tok, PosStart: tok.PosStart, PosEnd: tok.PosEnd})
+    nn := &NumberNode{Tok: tok}
+		return res.success(nn.SetPos())
 	} else if tok.type_ == IDENTIFIER {
     res.register_advancement()
 		p.advance()
-    return res.success(&VarAccessNode{tok, tok.PosStart, tok.PosEnd})
+    van := &VarAccessNode{VarName: tok}
+    return res.success(van.SetPos())
   } else if tok.type_ == LPAREN {
     res.register_advancement()
 		p.advance()
@@ -116,11 +161,15 @@ func (p *Parser) atom() *ParseResult {
     while_expr := res.register(p.while_expr())
     if res.error != nil { return res }
     return res.success(while_expr)
+  } else if tok.Matches(KEYWORD, "fn") {
+    func_def := res.register(p.func_def())
+    if res.error != nil { return res }
+    return res.success(func_def)
   }
 
   return res.failure(InvalidSyntaxError(
     p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
-    "Expected int, float, identifier, '+', '-', '('",
+    "Expected 'if', 'for', 'while', 'fn', int, float, identifier, '+', '-', '('",
   ))
 }
 
@@ -135,7 +184,8 @@ func (p *Parser) factor() *ParseResult {
 		if res.error != nil {
 			return res
 		}
-		return res.success(&UnaryOpNode{tok, factor, tok.PosStart, getEndPos(factor)})
+    uop := &UnaryOpNode{OpTok: tok, Node: factor}
+		return res.success(uop.SetPos())
 	}
 
 	return p.power()
@@ -159,7 +209,8 @@ func (p *Parser) comp_expr() *ParseResult {
 
     node := res.register(p.comp_expr())
     if res.error != nil { return &res }
-    return res.success(&UnaryOpNode{op_tok, node, op_tok.PosStart, op_tok.PosEnd})
+    uop := &UnaryOpNode{OpTok: op_tok, Node: node}
+    return res.success(uop.SetPos())
   }
 
   node := res.register(p.binOp(p.arith_expr, []any{EE, NE, LT, GT, LTE, GTE}, nil))
@@ -199,14 +250,15 @@ func (p *Parser) expr() *ParseResult {
 		p.advance()
     expr := res.register(p.expr())
     if res.error != nil { return &res }
-    return res.success(&VarAssignNode{var_name, expr, var_name.PosStart, expr.GetPosEnd()})
+    van := &VarAssignNode{VarName: var_name, ValueNode: expr}
+    return res.success(van.SetPos())
   }
 
   node := res.register(p.binOp(p.comp_expr, []any{BinOpMatch{KEYWORD, "and"}, BinOpMatch{KEYWORD, "or"}}, nil))
   if res.error != nil {
     return res.failure(InvalidSyntaxError(
       p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
-      "Expected 'var', 'not', int, float, identifier, '+', '-', '('",
+      "Expected 'var', 'if', 'for', 'while', 'not', int, float, identifier, '+', '-', '('",
     ))
   }
   return res.success(node)
@@ -305,13 +357,8 @@ func (p *Parser) if_expr() *ParseResult {
     res.register_advancement()
     p.advance()
   }
-  var pos_end Position
-  if else_case != nil {
-    pos_end = else_case.GetPosEnd()
-  } else {
-    pos_end = cases[len(cases) - 1][0].GetPosEnd()
-  }
-  return res.success(&IfNode{cases, else_case, cases[0][0].GetPosStart(), pos_end})
+  in := &IfNode{Cases: cases, ElseCase: else_case}
+  return res.success(in.SetPos())
 }
 
 func (p *Parser) for_expr() *ParseResult {
@@ -392,9 +439,8 @@ func (p *Parser) for_expr() *ParseResult {
   res.register_advancement()
   p.advance()
 
-  posStart := varName.PosStart
-  posEnd := body.GetPosEnd()
-  return res.success(&ForNode{VarNameTok: varName, StartVal: startVal, EndVal: endVal, StepVal: stepVal, BodyNode: body, PosStart: posStart, PosEnd: posEnd})
+  fn := &ForNode{VarNameTok: varName, StartVal: startVal, EndVal: endVal, StepVal: stepVal, BodyNode: body}
+  return res.success(fn.SetPos())
 }
 
 func (p *Parser) while_expr() *ParseResult {
@@ -432,8 +478,107 @@ func (p *Parser) while_expr() *ParseResult {
   }
   res.register_advancement()
   p.advance()
+  
+  wn := &WhileNode{Cond: condition, BodyNode: body}
+  return res.success(wn.SetPos())
+}
 
-  return res.success(&WhileNode{Cond: condition, BodyNode: body, PosStart: condition.GetPosStart(), PosEnd: body.GetPosEnd()})
+func (p *Parser) func_def() *ParseResult {
+  res := ParseResult{}
+
+  if !p.CurrentTok.Matches(KEYWORD, "fn") {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected 'fn'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+  
+  var var_name_tok *Token
+  if p.CurrentTok.type_ == IDENTIFIER {
+    var_name_tok = &p.CurrentTok
+    res.register_advancement()
+    p.advance()
+    if p.CurrentTok.type_ != LPAREN {
+      return res.failure(InvalidSyntaxError(
+        p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+        "Expected '('",
+      ))
+    }
+  } else {
+    var_name_tok = nil
+    if p.CurrentTok.type_ != LPAREN {
+      return res.failure(InvalidSyntaxError(
+        p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+        "Expected identifier or '('",
+      ))
+    }
+  }
+  res.register_advancement()
+  p.advance()
+  var arg_name_toks []Token
+
+  if p.CurrentTok.type_ == IDENTIFIER {
+    arg_name_toks = append(arg_name_toks, p.CurrentTok)
+    res.register_advancement()
+    p.advance()
+
+    for p.CurrentTok.type_ == COMMA {
+      res.register_advancement()
+      p.advance()
+
+      if p.CurrentTok.type_ != IDENTIFIER {
+        return res.failure(InvalidSyntaxError(
+          p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+          "Expected identifier",
+        ))
+      }
+      arg_name_toks = append(arg_name_toks, p.CurrentTok)
+      res.register_advancement()
+      p.advance()
+    }
+
+    if p.CurrentTok.type_ != RPAREN {
+      return res.failure(InvalidSyntaxError(
+        p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+        "Expected ',' or ')'",
+      ))
+    }
+  } else {
+    if p.CurrentTok.type_ != RPAREN {
+      return res.failure(InvalidSyntaxError(
+        p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+        "Expected identifier or ')'",
+      ))
+    }
+  }
+  res.register_advancement()
+  p.advance()
+
+  if p.CurrentTok.type_ != LBRACE {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected '{'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  body := res.register(p.expr())
+  if res.error != nil { return &res }
+
+  if p.CurrentTok.type_ != RBRACE {
+    return res.failure(InvalidSyntaxError(
+      p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
+      "Expected '}'",
+    ))
+  }
+  res.register_advancement()
+  p.advance()
+
+  fn := &FuncDefNode{VarNameTok: var_name_tok, ArgNameToks: arg_name_toks, BodyNode: body}
+  return res.success(fn.SetPos())
 }
 
 func (p *Parser) binOp(fna func() *ParseResult, ops []any, fnb func() *ParseResult) *ParseResult {

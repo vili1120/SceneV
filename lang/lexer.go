@@ -68,6 +68,9 @@ func (l *Lexer) MakeTokens() ([]Token, *Error) {
     } else if l.current_char == "}" {
       tokens = append(tokens, NewToken(RBRACE, nil, &l.pos, nil))
       l.advance()
+    } else if l.current_char == "," {
+      tokens = append(tokens, NewToken(COMMA, nil, &l.pos, nil))
+      l.advance()
     } else if l.current_char == "!" {
       tok, err := l.MakeNE()
       if err != nil { return nil, err }

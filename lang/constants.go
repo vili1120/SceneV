@@ -34,6 +34,8 @@ const (
 
   ARROW         = "ARROW"
 
+  COMMA         = "COMMA"
+
   EOF           = "EOF"
 )
 
@@ -47,6 +49,8 @@ var KEYWORDS = []string{
   "if",
   "elif",
   "else",
+
+  "fn",
 
   "while",
   "for",
