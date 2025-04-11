@@ -74,8 +74,14 @@ func (i *Interpreter) VisitVarAccessNode(node *VarAccessNode, context Context) R
       context,
     ))
   }
-
-  value = value.(*Number).Copy().SetPos(&node.PosStart, &node.PosEnd)
+  switch value.(type) {
+    case *Number:
+      value = value.(*Number).Copy().SetPos(&node.PosStart, &node.PosEnd)
+    case *Value:
+      value = value.(*Value).SetPos(&node.PosStart, &node.PosEnd)
+    case *Function:
+      value = value.(*Function).SetPos(&node.PosStart, &node.PosEnd)
+  }
   return res.Success(value)
 }
 
@@ -172,22 +178,19 @@ func (i *Interpreter) VisitWhileNode(node *WhileNode, context Context) RTResult 
 
 func (i *Interpreter) VisitFuncDefNode(node *FuncDefNode, context Context) RTResult {
   res := RTResult{}
-  var funcName *string
-  if node.VarNameTok != nil {
-    funcName = node.VarNameTok.value.(*string)
-  } else {
-    funcName = nil
-  }
+  funcName := node.VarNameTok.value
+  
   body := node.BodyNode
   var arg_names []string
   for _, v := range node.ArgNameToks {
     arg_names = append(arg_names, v.value.(string))
   }
 
-  funcValue := NewFunction(funcName, body, arg_names).SetContext(&context).SetPos(&node.PosStart, &node.PosEnd)
-
-  if node.VarNameTok != nil {
-    context.SymbolTable.Set(*funcName, funcValue)
+  funcValue := NewFunction(funcName.(string), body, arg_names).SetContext(&context).SetPos(&node.PosStart, &node.PosEnd)
+  
+  emptyTok := Token{}
+  if node.VarNameTok != emptyTok {
+    context.SymbolTable.Set(funcName.(string), funcValue)
   }
 
   return res.Success(funcValue)
@@ -199,7 +202,7 @@ func (i *Interpreter) VisitCallNode(node *CallNode, context Context) RTResult {
 
   valueToCall := res.Register(i.Visit(node.NodeToCall, context))
   if res.error != nil { return res }
-  CallVal := valueToCall.(*Function).Copy().SetPos(&node.PosStart, &node.PosEnd)
+  CallVal := valueToCall.(*Function).SetPos(&node.PosStart, &node.PosEnd)
 
   for _, argNode := range node.ArgNodes {
     args = append(args, res.Register(i.Visit(argNode, context)))

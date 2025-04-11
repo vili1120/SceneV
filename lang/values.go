@@ -452,12 +452,12 @@ func NumToBool(num any) bool {
 
 ///////////////////////////////////////////////////////////////////////////
 
-func NewFunction(name *string, body Node, argNames []string) *Function {
+func NewFunction(name string, body Node, argNames []string) *Function {
   var Name string
-  if name == nil {
+  if name == "" {
     Name = "<anonymous>"
   } else {
-    Name = *name
+    Name = name
   }
   f := &Function{
     Name: Name,
@@ -466,6 +466,8 @@ func NewFunction(name *string, body Node, argNames []string) *Function {
   }
   f.SetPos(nil, nil)
   f.SetContext(nil)
+  f.Value.SetContext(nil)
+  f.Value.SetPos(nil, nil)
   return f
 }
 
@@ -516,6 +518,6 @@ func (f *Function) Copy() *Function {
   return &copy
 }
 
-func (f *Function) String() string {
+func (f Function) String() string {
   return fmt.Sprintf("<function %v>", f.Name)
 }

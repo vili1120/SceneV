@@ -495,9 +495,9 @@ func (p *Parser) func_def() *ParseResult {
   res.register_advancement()
   p.advance()
   
-  var var_name_tok *Token
+  var var_name_tok Token
   if p.CurrentTok.type_ == IDENTIFIER {
-    var_name_tok = &p.CurrentTok
+    var_name_tok = p.CurrentTok
     res.register_advancement()
     p.advance()
     if p.CurrentTok.type_ != LPAREN {
@@ -507,7 +507,7 @@ func (p *Parser) func_def() *ParseResult {
       ))
     }
   } else {
-    var_name_tok = nil
+    var_name_tok = Token{value: ""}
     if p.CurrentTok.type_ != LPAREN {
       return res.failure(InvalidSyntaxError(
         p.CurrentTok.PosStart, p.CurrentTok.PosEnd,
