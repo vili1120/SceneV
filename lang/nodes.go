@@ -215,7 +215,7 @@ func (uop *UnaryOpNode) SetPos() *UnaryOpNode {
 }
 
 type FuncDefNode struct {
-  VarNameTok *Token
+  VarNameTok Token
   ArgNameToks []Token
   BodyNode Node
   PosStart Position
@@ -235,7 +235,8 @@ func (fdn *FuncDefNode) GetPosEnd() Position {
 }
 
 func (fdn *FuncDefNode) SetPos() *FuncDefNode {
-  if fdn.VarNameTok != nil {
+  emptyTok := Token{}
+  if fdn.VarNameTok != emptyTok {
     fdn.PosStart = fdn.VarNameTok.PosStart
   } else if len(fdn.ArgNameToks) > 0 {
     fdn.PosStart = fdn.ArgNameToks[0].PosStart
