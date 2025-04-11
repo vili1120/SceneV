@@ -198,14 +198,17 @@ func (i *Interpreter) VisitFuncDefNode(node *FuncDefNode, context Context) RTRes
 
 func (i *Interpreter) VisitCallNode(node *CallNode, context Context) RTResult {
   res := RTResult{}
-  args := []any{}
+  args := []*Val{}
 
   valueToCall := res.Register(i.Visit(node.NodeToCall, context))
   if res.error != nil { return res }
-  CallVal := valueToCall.(*Function).SetPos(&node.PosStart, &node.PosEnd)
+  var CallVal *Function
+  if fn, ok := valueToCall.(*Function); ok {
+    CallVal = fn.SetPos(&node.PosStart, &node.PosEnd)
+  }
 
   for _, argNode := range node.ArgNodes {
-    args = append(args, res.Register(i.Visit(argNode, context)))
+    args = append(args, res.Register(i.Visit(argNode, context)).(*Val))
     if res.error != nil { return res }
   }
   returnVal := res.Register(CallVal.Execute(args))

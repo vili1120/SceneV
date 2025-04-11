@@ -5,7 +5,28 @@ import (
 	"math"
 )
 
+type Val interface {
+  SetPos(pos_start, pos_end *Position) Val
+  SetContext(context *Context) Val
+  Copy() Val
+  Add(other Val) (Val, *Error)
+  Sub(other Val) (Val, *Error)
+  Mul(other Val) (Val, *Error)
+  Div(other Val) (Val, *Error)
+  Pow(other Val) (Val, *Error)
+  CompEQ(other Val) (Val, *Error)
+  CompNE(other Val) (Val, *Error)
+  CompLT(other Val) (Val, *Error)
+  CompGT(other Val) (Val, *Error)
+  CompLTE(other Val) (Val, *Error)
+  CompGTE(other Val) (Val, *Error)
+  And(other Val) (Val, *Error)
+  Or(other Val) (Val, *Error) 
+  Not() (Val, *Error) 
+}
+
 type Value struct {
+  Val
   PosStart *Position
   PosEnd *Position
   Context *Context
@@ -116,6 +137,7 @@ func NewNumber(value any) *Number {
 }
 
 type Number struct {
+  Val
   Value
   value any
   PosStart, PosEnd *Position
@@ -466,19 +488,29 @@ func NewFunction(name string, body Node, argNames []string) *Function {
   }
   f.SetPos(nil, nil)
   f.SetContext(nil)
-  f.Value.SetContext(nil)
-  f.Value.SetPos(nil, nil)
   return f
 }
 
 type Function struct {
+  Val
   Value
   Name string
   BodyNode Node
   ArgNames []string
 }
 
-func (f *Function) Execute(args []Value) (RTResult){
+func (f *Function) SetPos(pos_start, pos_end *Position) *Function {
+  f.PosStart = pos_start
+  f.PosEnd = pos_end
+  return f
+}
+
+func (f *Function) SetContext(context *Context) *Function {
+  f.Context = context
+  return f
+}
+
+func (f *Function) Execute(args []*Val) (RTResult){
   res := RTResult{}
   interpreter := Interpreter{}
 
@@ -502,7 +534,7 @@ func (f *Function) Execute(args []Value) (RTResult){
 
   for i := range len(args) {
     argName := f.ArgNames[i]
-    argVal := args[i]
+    argVal := *args[i]
     argVal.SetContext(&newCtx)
     newCtx.SymbolTable.Set(argName, argVal)
   }
