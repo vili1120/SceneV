@@ -80,7 +80,8 @@ func (i *Interpreter) VisitVarAccessNode(node *VarAccessNode, context Context) R
     case *Value:
       value = value.(*Value).SetPos(&node.PosStart, &node.PosEnd)
     case *Function:
-      value = value.(*Function).SetPos(&node.PosStart, &node.PosEnd)
+      value = value.(*Function).Copy().SetPos(&node.PosStart, &node.PosEnd)
+      return res.Success(value)
   }
   return res.Success(value)
 }
@@ -188,7 +189,7 @@ func (i *Interpreter) VisitFuncDefNode(node *FuncDefNode, context Context) RTRes
 
   funcValue := NewFunction(funcName.(string), body, arg_names).SetContext(&context).SetPos(&node.PosStart, &node.PosEnd)
   
-  emptyTok := Token{}
+  emptyTok := Token{value: ""}
   if node.VarNameTok != emptyTok {
     context.SymbolTable.Set(funcName.(string), funcValue)
   }
@@ -202,7 +203,10 @@ func (i *Interpreter) VisitCallNode(node *CallNode, context Context) RTResult {
 
   valueToCall := res.Register(i.Visit(node.NodeToCall, context))
   if res.error != nil { return res }
-  CallVal := valueToCall.(*Function).SetPos(&node.PosStart, &node.PosEnd)
+  if fn, ok := valueToCall.(*Function); ok {
+    valueToCall = fn
+  }
+  CallVal := valueToCall.(*Value).SetPos(&node.PosStart, &node.PosEnd)
 
   for _, argNode := range node.ArgNodes {
     args = append(args, res.Register(i.Visit(argNode, context)))
