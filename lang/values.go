@@ -510,7 +510,7 @@ func (f *Function) SetContext(context *Context) *Function {
   return f
 }
 
-func (f *Function) Execute(args []*Val) (RTResult){
+func (f *Function) Execute(args []Val) (RTResult){
   res := RTResult{}
   interpreter := Interpreter{}
 
@@ -534,7 +534,7 @@ func (f *Function) Execute(args []*Val) (RTResult){
 
   for i := range len(args) {
     argName := f.ArgNames[i]
-    argVal := *args[i]
+    argVal := args[i]
     argVal.SetContext(&newCtx)
     newCtx.SymbolTable.Set(argName, argVal)
   }
