@@ -21,28 +21,29 @@ import (
 //  CompLTE(other *Val) (*Val, *Error)
 //  CompGTE(other *Val) (*Val, *Error)
 //  And(other *Val) (*Val, *Error)
-//  Or(other *Val) (*Val, *Error) 
-//  Not() (Val, *Error) 
+//  Or(other *Val) (*Val, *Error)
+//  Not() (Val, *Error)
 //}
 
 type Val interface {
-  SetPos(*Position, *Position) *Val
-  SetContext(*Context) *Val
-  Copy() *Val
-  Add(*Val) (*Val, *Error)
-  Sub(*Val) (*Val, *Error)
-  Mul(*Val) (*Val, *Error)
-  Div(*Val) (*Val, *Error)
-  Pow(*Val) (*Val, *Error)
-  CompEQ(*Val) (*Val, *Error)
-  CompNE(*Val) (*Val, *Error)
-  CompLT(*Val) (*Val, *Error)
-  CompGT(*Val) (*Val, *Error)
-  CompLTE(*Val) (*Val, *Error)
-  CompGTE(*Val) (*Val, *Error)
-  And(*Val) (*Val, *Error)
-  Or(*Val) (*Val, *Error) 
-  Not() (Val, *Error) 
+  SetPos(*Position, *Position) Val
+  SetContext(*Context) Val
+  Copy() Val
+  Add(any) (Val, *Error)
+  Sub(any) (Val, *Error)
+  Mul(any) (Val, *Error)
+  Div(any) (Val, *Error)
+  Pow(any) (Val, *Error)
+  CompEQ(any) (Val, *Error)
+  CompNE(any) (Val, *Error)
+  CompLT(any) (Val, *Error)
+  CompGT(any) (Val, *Error)
+  CompLTE(any) (Val, *Error)
+  CompGTE(any) (Val, *Error)
+  And(any) (Val, *Error)
+  Or(any) (Val, *Error) 
+  Not() (Val, *Error)
+  String() string
 }
 
 type Value struct {
