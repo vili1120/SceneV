@@ -5,23 +5,43 @@ import (
 	"math"
 )
 
+//type Val interface {
+//  SetPos(pos_start, pos_end *Position) *Val
+//  SetContext(context *Context) *Val
+//  Copy() *Val
+//  Add(other *Val) (*Val, *Error)
+//  Sub(other *Val) (*Val, *Error)
+//  Mul(other *Val) (*Val, *Error)
+//  Div(other *Val) (*Val, *Error)
+//  Pow(other *Val) (*Val, *Error)
+//  CompEQ(other *Val) (*Val, *Error)
+//  CompNE(other *Val) (*Val, *Error)
+//  CompLT(other *Val) (*Val, *Error)
+//  CompGT(other *Val) (*Val, *Error)
+//  CompLTE(other *Val) (*Val, *Error)
+//  CompGTE(other *Val) (*Val, *Error)
+//  And(other *Val) (*Val, *Error)
+//  Or(other *Val) (*Val, *Error) 
+//  Not() (Val, *Error) 
+//}
+
 type Val interface {
-  SetPos(pos_start, pos_end *Position) Val
-  SetContext(context *Context) Val
-  Copy() Val
-  Add(other Val) (Val, *Error)
-  Sub(other Val) (Val, *Error)
-  Mul(other Val) (Val, *Error)
-  Div(other Val) (Val, *Error)
-  Pow(other Val) (Val, *Error)
-  CompEQ(other Val) (Val, *Error)
-  CompNE(other Val) (Val, *Error)
-  CompLT(other Val) (Val, *Error)
-  CompGT(other Val) (Val, *Error)
-  CompLTE(other Val) (Val, *Error)
-  CompGTE(other Val) (Val, *Error)
-  And(other Val) (Val, *Error)
-  Or(other Val) (Val, *Error) 
+  SetPos(*Position, *Position) *Val
+  SetContext(*Context) *Val
+  Copy() *Val
+  Add(*Val) (*Val, *Error)
+  Sub(*Val) (*Val, *Error)
+  Mul(*Val) (*Val, *Error)
+  Div(*Val) (*Val, *Error)
+  Pow(*Val) (*Val, *Error)
+  CompEQ(*Val) (*Val, *Error)
+  CompNE(*Val) (*Val, *Error)
+  CompLT(*Val) (*Val, *Error)
+  CompGT(*Val) (*Val, *Error)
+  CompLTE(*Val) (*Val, *Error)
+  CompGTE(*Val) (*Val, *Error)
+  And(*Val) (*Val, *Error)
+  Or(*Val) (*Val, *Error) 
   Not() (Val, *Error) 
 }
 
