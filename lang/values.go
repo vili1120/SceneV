@@ -47,7 +47,6 @@ type Val interface {
 }
 
 type Value struct {
-  Val
   PosStart *Position
   PosEnd *Position
   Context *Context
@@ -158,7 +157,6 @@ func NewNumber(value any) *Number {
 }
 
 type Number struct {
-  Val
   Value
   value any
   PosStart, PosEnd *Position
@@ -513,7 +511,6 @@ func NewFunction(name string, body Node, argNames []string) *Function {
 }
 
 type Function struct {
-  Val
   Value
   Name string
   BodyNode Node
