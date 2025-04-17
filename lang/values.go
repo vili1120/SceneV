@@ -134,10 +134,22 @@ func (v *Value) IsTrue() bool {
   return false
 }
 
-func (v *Value) IllegalOperation(other any) *Error {
+func (v *Value) IllegalOperation(other Val) *Error {
   if other == nil { other = v }
   switch o := other.(type) {
     case *Number:
+      return RTError(
+        *v.PosStart, *o.PosEnd,
+        "Illegal operation",
+        *v.Context,
+      )
+    case *StringVal:
+      return RTError(
+        *v.PosStart, *o.PosEnd,
+        "Illegal operation",
+        *v.Context,
+      )
+    case *Function:
       return RTError(
         *v.PosStart, *o.PosEnd,
         "Illegal operation",

@@ -64,6 +64,12 @@ func (l *Lexer) MakeTokens() ([]Token, *Error) {
     } else if l.current_char == ")" {
       tokens = append(tokens, NewToken(RPAREN, nil, &l.pos, nil))
       l.advance()
+    } else if l.current_char == "[" {
+      tokens = append(tokens, NewToken(LSQUARE, nil, &l.pos, nil))
+      l.advance()
+    } else if l.current_char == "]" {
+      tokens = append(tokens, NewToken(RSQUARE, nil, &l.pos, nil))
+      l.advance()
     } else if l.current_char == "{" {
       tokens = append(tokens, NewToken(LBRACE, nil, &l.pos, nil))
       l.advance()

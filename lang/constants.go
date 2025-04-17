@@ -30,6 +30,10 @@ const (
 
   LPAREN        = "LPAREN"
   RPAREN        = "RPAREN"
+
+  LSQUARE       = "LSQUARE"
+  RSQUARE       = "RSQUARE"
+
   LBRACE        = "LBRACE"
   RBRACE        = "RBRACE"
 
