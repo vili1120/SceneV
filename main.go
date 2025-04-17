@@ -1,17 +1,24 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
-	"os"
 	"SceneV/lang"
+	"os"
+	"fmt"
+
+	"github.com/chzyer/readline"
 )
 
 func input(prompt string) string {
-	fmt.Print(prompt)
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	return scanner.Text()
+	rl, err := readline.New(prompt)
+	if err != nil {
+		os.Exit(0)
+	}
+	defer rl.Close()
+	line, err := rl.Readline()
+	if err != nil {
+		os.Exit(0)
+	}
+  return line
 }
 
 

@@ -179,7 +179,7 @@ func (s *StringVal) SetContext(context *Context) Val {
   return s
 }
 
-func (s *StringVal) copy() Val {
+func (s *StringVal) Copy() Val {
   copy := NewString(s.value)
   copy.SetPos(s.PosStart, s.PosEnd)
   copy.SetContext(s.Context)
