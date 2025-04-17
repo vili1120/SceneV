@@ -1,17 +1,17 @@
 package lang
 
 type SymbolTable struct {
-	Symbols map[string]any
+	Symbols map[string]Val
 	Parent  *SymbolTable
 }
 
 func NewSymbolTable() *SymbolTable {
 	return &SymbolTable{
-		Symbols: map[string]any{},
+		Symbols: map[string]Val{},
 	}
 }
 
-func (st *SymbolTable) Get(name string) any {
+func (st *SymbolTable) Get(name string) Val {
 	value, ok := st.Symbols[name]
 	if !ok && st.Parent != nil {
 		return st.Parent.Get(name)
@@ -19,7 +19,7 @@ func (st *SymbolTable) Get(name string) any {
 	return value
 }
 
-func (st *SymbolTable) Set(name string, value any) {
+func (st *SymbolTable) Set(name string, value Val) {
 	st.Symbols[name] = value
 }
 

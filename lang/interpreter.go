@@ -91,7 +91,7 @@ func (i *Interpreter) VisitVarAssignNode(node *VarAssignNode, context Context) R
   var_name := node.VarName.value
   value := res.Register(i.Visit(node.ValueNode, context))
   if res.error != nil { return res }
-  context.SymbolTable.Set(var_name.(string), value)
+  context.SymbolTable.Set(var_name.(string), value.(Val))
   return res.Success(nil)
 }
 
@@ -139,7 +139,7 @@ func (i *Interpreter) VisitForNode(node *ForNode, context Context) RTResult {
     if res.error != nil { return res }
     stepNum = stepVal.(*Number)
   } else {
-    stepNum = NewNumber(1)
+    stepNum = NewNumber(1).(*Number)
   }
 
   IVal := startNum.value.(int)
@@ -205,7 +205,7 @@ func (i *Interpreter) VisitCallNode(node *CallNode, context Context) RTResult {
   if res.error != nil { return res }
   var CallVal *Function
   if fn, ok := valueToCall.(*Function); ok {
-    CallVal = fn.SetPos(&node.PosStart, &node.PosEnd)
+    CallVal = fn.SetPos(&node.PosStart, &node.PosEnd).(*Function)
   }
 
   for _, argNode := range node.ArgNodes {
@@ -231,7 +231,7 @@ func (i *Interpreter) VisitBinOpNode(node *BinOpNode, context Context) RTResult{
 		panic("Operands must be numbers")
 	}
 
-  var result *Number
+  var result Val
   var err *Error
 
   if node.OpTok.type_ == PLUS {
@@ -273,9 +273,9 @@ func (i *Interpreter) VisitUnaryOpNode(node *UnaryOpNode, context Context) RTRes
   res := RTResult{}
   number := res.Register(i.Visit(node.Node, context))
   if res.error != nil {return res}
-  num, ok := number.(*Number)
+  num, ok := number.(Val)
   if !ok {
-    panic("Operand must a number")
+    panic("Operand must be a number")
   }
 
   var err *Error = nil

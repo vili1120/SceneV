@@ -29,19 +29,19 @@ type Val interface {
   SetPos(*Position, *Position) Val
   SetContext(*Context) Val
   Copy() Val
-  Add(any) (Val, *Error)
-  Sub(any) (Val, *Error)
-  Mul(any) (Val, *Error)
-  Div(any) (Val, *Error)
-  Pow(any) (Val, *Error)
-  CompEQ(any) (Val, *Error)
-  CompNE(any) (Val, *Error)
-  CompLT(any) (Val, *Error)
-  CompGT(any) (Val, *Error)
-  CompLTE(any) (Val, *Error)
-  CompGTE(any) (Val, *Error)
-  And(any) (Val, *Error)
-  Or(any) (Val, *Error) 
+  Add(Val) (Val, *Error)
+  Sub(Val) (Val, *Error)
+  Mul(Val) (Val, *Error)
+  Div(Val) (Val, *Error)
+  Pow(Val) (Val, *Error)
+  CompEQ(Val) (Val, *Error)
+  CompNE(Val) (Val, *Error)
+  CompLT(Val) (Val, *Error)
+  CompGT(Val) (Val, *Error)
+  CompLTE(Val) (Val, *Error)
+  CompGTE(Val) (Val, *Error)
+  And(Val) (Val, *Error)
+  Or(Val) (Val, *Error) 
   Not() (Val, *Error)
   String() string
 }
@@ -52,74 +52,75 @@ type Value struct {
   Context *Context
 }
 
-func (v *Value) SetPos(pos_start, pos_end *Position) *Value {
+func (v *Value) SetPos(pos_start, pos_end *Position) Val {
   v.PosStart = pos_start
   v.PosEnd = pos_end
   return v
 }
 
-func (v *Value) Copy() {
+func (v *Value) Copy() Val {
   panic("No copy method defined")
+  return nil
 }
 
-func (v *Value) SetContext(context *Context) *Value {
+func (v *Value) SetContext(context *Context) Val {
   v.Context = context
   return v
 }
 
-func (v *Value) Add(other *Value) (*Value, *Error) {
+func (v *Value) Add(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) Sub(other *Value) (*Value, *Error) {
+func (v *Value) Sub(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) Mul(other *Value) (*Value, *Error) {
+func (v *Value) Mul(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) Div(other *Value) (*Value, *Error) {
+func (v *Value) Div(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) Pow(other *Value) (*Value, *Error) {
+func (v *Value) Pow(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) CompEQ(other *Value) (*Value, *Error) {
+func (v *Value) CompEQ(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) CompNE(other *Value) (*Value, *Error) {
+func (v *Value) CompNE(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) CompLT(other *Value) (*Value, *Error) {
+func (v *Value) CompLT(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) CompGT(other *Value) (*Value, *Error) {
+func (v *Value) CompGT(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) CompLTE(other *Value) (*Value, *Error) {
+func (v *Value) CompLTE(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) CompGTE(other *Value) (*Value, *Error) {
+func (v *Value) CompGTE(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) And(other *Value) (*Value, *Error) {
+func (v *Value) And(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) Or(other *Value) (*Value, *Error) {
+func (v *Value) Or(other Val) (Val, *Error) {
   return nil, v.IllegalOperation(other)
 }
 
-func (v *Value) Not() (*Value, *Error) {
+func (v *Value) Not() (Val, *Error) {
   return nil, v.IllegalOperation(v)
 }
 
@@ -145,9 +146,13 @@ func (v *Value) IllegalOperation(other any) *Error {
   return nil
 }
 
+func (v *Value) String() string {
+  return ""
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
-func NewNumber(value any) *Number {
+func NewNumber(value any) Val {
   n := &Number{
     value: value,
   }
@@ -163,25 +168,25 @@ type Number struct {
   Context *Context
 }
 
-func (n *Number) SetPos(pos_start, pos_end *Position) *Number {
+func (n *Number) SetPos(pos_start, pos_end *Position) Val {
   n.PosStart = pos_start
   n.PosEnd = pos_end
   return n
 }
 
-func (n *Number) Copy() *Number {
+func (n *Number) Copy() Val {
   copy := NewNumber(n.value)
   copy.SetPos(n.PosStart, n.PosEnd)
   copy.SetContext(n.Context)
   return copy
 }
 
-func (n *Number) SetContext(context *Context) *Number {
+func (n *Number) SetContext(context *Context) Val {
   n.Context = context
   return n
 }
 
-func (n *Number) Add(other any) (*Number, *Error) {
+func (n *Number) Add(other Val) (Val, *Error) {
   switch o := other.(type) {
     case *Number:
 	    switch v1 := n.value.(type) {
@@ -204,7 +209,7 @@ func (n *Number) Add(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) Sub(other any) (*Number, *Error) {
+func (n *Number) Sub(other Val) (Val, *Error) {
   switch o := other.(type) {
     case *Number:
 	    switch v1 := n.value.(type) {
@@ -227,7 +232,7 @@ func (n *Number) Sub(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) Mul(other any) (*Number, *Error) {
+func (n *Number) Mul(other Val) (Val, *Error) {
   switch o := other.(type) {
     case *Number:
 	    switch v1 := n.value.(type) {
@@ -250,7 +255,7 @@ func (n *Number) Mul(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) Div(other any) (*Number, *Error) {
+func (n *Number) Div(other Val) (Val, *Error) {
   switch o := other.(type) {
     case *Number:
       if o.value == 0 || o.value == 0.0 {
@@ -280,7 +285,7 @@ func (n *Number) Div(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) Pow(other any) (*Number, *Error) {
+func (n *Number) Pow(other Val) (Val, *Error) {
   switch o := other.(type) {
     case *Number:
 	    switch v1 := n.value.(type) {
@@ -303,7 +308,7 @@ func (n *Number) Pow(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompEQ(other any) (*Number, *Error) {
+func (n *Number) CompEQ(other Val) (Val, *Error) {
   switch other := other.(type) {
     case *Number:
 	    switch v1 := n.value.(type) {
@@ -326,7 +331,7 @@ func (n *Number) CompEQ(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompNE(other any) (*Number, *Error) {
+func (n *Number) CompNE(other Val) (Val, *Error) {
   switch other := other.(type) {
     case *Number:
 	    switch v1 := n.value.(type) {
@@ -349,7 +354,7 @@ func (n *Number) CompNE(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompLT(other any) (*Number, *Error) {
+func (n *Number) CompLT(other Val) (Val, *Error) {
   switch other := other.(type) {
     case *Number:
 	    switch v1 := n.value.(type) {
@@ -372,7 +377,7 @@ func (n *Number) CompLT(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompGT(other any) (*Number, *Error) {
+func (n *Number) CompGT(other Val) (Val, *Error) {
   switch other := other.(type) {
     case *Number:
 	    switch v1 := n.value.(type) {
@@ -395,7 +400,7 @@ func (n *Number) CompGT(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompLTE(other any) (*Number, *Error) {
+func (n *Number) CompLTE(other Val) (Val, *Error) {
   switch other := other.(type) {
     case *Number:
 	    switch v1 := n.value.(type) {
@@ -418,7 +423,7 @@ func (n *Number) CompLTE(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) CompGTE(other any) (*Number, *Error) {
+func (n *Number) CompGTE(other Val) (Val, *Error) {
   switch other := other.(type) {
     case *Number:
 	    switch v1 := n.value.(type) {
@@ -441,7 +446,7 @@ func (n *Number) CompGTE(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) And(other any) (*Number, *Error) {
+func (n *Number) And(other Val) (Val, *Error) {
   switch other := other.(type) {
     case *Number:
 	  return NewNumber(BoolToInt(NumToBool(n.value) && NumToBool(other.value))).SetContext(n.Context), nil
@@ -449,7 +454,7 @@ func (n *Number) And(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) Or(other any) (*Number, *Error) {
+func (n *Number) Or(other Val) (Val, *Error) {
   switch other := other.(type) {
     case *Number:
 	  return NewNumber(BoolToInt(NumToBool(n.value) || NumToBool(other.value))).SetContext(n.Context), nil
@@ -457,7 +462,7 @@ func (n *Number) Or(other any) (*Number, *Error) {
   return nil, n.Value.IllegalOperation(other)
 }
 
-func (n *Number) Not() (*Number, *Error) {
+func (n *Number) Not() (Val, *Error) {
   if n.value == 0 {
     return NewNumber(1).SetContext(n.Context), nil
   }
@@ -517,13 +522,13 @@ type Function struct {
   ArgNames []string
 }
 
-func (f *Function) SetPos(pos_start, pos_end *Position) *Function {
+func (f *Function) SetPos(pos_start, pos_end *Position) Val {
   f.PosStart = pos_start
   f.PosEnd = pos_end
   return f
 }
 
-func (f *Function) SetContext(context *Context) *Function {
+func (f *Function) SetContext(context *Context) Val {
   f.Context = context
   return f
 }
@@ -561,7 +566,7 @@ func (f *Function) Execute(args []Val) (RTResult){
   return res.Success(Val)
 }
 
-func (f *Function) Copy() *Function {
+func (f *Function) Copy() Val {
   copy := Function{Name: f.Name, BodyNode: f.BodyNode, ArgNames: f.ArgNames}
   copy.SetContext(f.Context)
   copy.SetPos(f.PosStart, f.PosEnd)
