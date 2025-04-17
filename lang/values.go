@@ -152,6 +152,83 @@ func (v *Value) String() string {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+func NewString(value any) Val {
+  s := &String{
+    value: value,
+  }
+  s.SetPos(nil, nil)
+  s.SetContext(nil)
+  return s
+}
+
+type String struct {
+  Value
+  value any
+  Context *Context
+}
+
+func (s *String) copy() Val {
+  copy := NewString(s.value)
+  copy.SetPos(s.PosStart, s.PosEnd)
+  copy.SetContext(s.Context)
+  return copy
+}
+
+func (s *String) Add(other Val) (Val, *Error) {
+  switch o := other.(type) {
+    case *String:
+      return NewString(s.value.(string)+o.value.(string)).SetContext(s.Context), nil
+  }
+  return nil, s.IllegalOperation(other)
+}
+
+func (s *String) Div(other Val) (Val, *Error) {
+  switch o := other.(type) {
+    case *Number:
+      runes := []rune(s.value.(string))
+      return NewString(string(runes[o.value.(int)])).SetContext(s.Context), nil
+  }
+  return nil, s.IllegalOperation(other)
+}
+
+func (s *String) CompEQ(other Val) (Val, *Error) {
+  switch o := other.(type) {
+    case *String:
+      if s.value.(string) == o.value.(string) {
+        return NewNumber(1).SetContext(s.Context), nil
+      } else {
+        return NewNumber(0).SetContext(s.Context), nil
+      }
+  }
+  return nil, s.IllegalOperation(other)
+}
+
+func (s *String) CompNE(other Val) (Val, *Error) {
+  switch o := other.(type) {
+    case *String:
+      if s.value.(string) != o.value.(string) {
+        return NewNumber(1).SetContext(s.Context), nil
+      } else {
+        return NewNumber(0).SetContext(s.Context), nil
+      }
+  }
+  return nil, s.IllegalOperation(other)
+}
+
+func (s *String) IsTrue() bool {
+  if len(s.value.(string)) > 0 {
+    return NumToBool(NewNumber(1).SetContext(s.Context))
+  } else {
+    return NumToBool(NewNumber(0).SetContext(s.Context))
+  }
+}
+
+func (s *String) String() string {
+  return fmt.Sprintf("\"%v\"", s.value.(string))
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 func NewNumber(value any) Val {
   n := &Number{
     value: value,
@@ -164,7 +241,6 @@ func NewNumber(value any) Val {
 type Number struct {
   Value
   value any
-  PosStart, PosEnd *Position
   Context *Context
 }
 

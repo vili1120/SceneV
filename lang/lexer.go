@@ -46,6 +46,8 @@ func (l *Lexer) MakeTokens() ([]Token, *Error) {
       tokens = append(tokens, l.MakeNumbers())
     } else if strings.Contains(LETTERS, l.current_char) {
       tokens = append(tokens, l.MakeIdentifier())
+    } else if l.current_char == "\"" {
+      tokens = append(tokens, l.MakeString())
     } else if l.current_char == "+" {
       tokens = append(tokens, NewToken(PLUS, nil, &l.pos, nil))
       l.advance()
@@ -217,4 +219,31 @@ func (l *Lexer) MakeArrow() Token {
   }
 
   return NewToken(tok_type, nil, &pos_start, &l.pos)
+}
+
+func (l *Lexer) MakeString() Token {
+  str := ""
+  posStart := l.pos.Copy()
+  escapeChar := false
+  l.advance()
+
+  EscapeChars := map[string]string{
+    "n": "\n",
+    "t": "\t",
+  }
+
+  for l.current_char != "" && (l.current_char != "\"" || escapeChar) {
+    if escapeChar {
+      str += EscapeChars[l.current_char]
+    } else {
+      if l.current_char == "\\" {
+        escapeChar = true
+      } else {
+        str += l.current_char
+      }
+    }
+    l.advance()
+    escapeChar = false
+  }
+  return NewToken(STRING, str, &posStart, &l.pos)
 }

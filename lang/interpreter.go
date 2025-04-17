@@ -55,6 +55,12 @@ func (i *Interpreter) Visit(node Node, context Context) RTResult {
 	return rtResult
 }
 
+func (i *Interpreter) VisitStringNode(node *StringNode, context Context) RTResult {
+  res := RTResult{}
+  return res.Success(
+    NewString(node.Tok.value).SetContext(&context).SetPos(&node.PosStart, &node.PosEnd),
+  )
+}
 
 func (i *Interpreter) VisitNumberNode(node *NumberNode, context Context) RTResult {
   res := RTResult{}

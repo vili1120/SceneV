@@ -32,6 +32,30 @@ func (nn *NumberNode) SetPos() *NumberNode {
   return nn
 }
 
+type StringNode struct {
+	Tok      Token
+	PosStart Position
+	PosEnd   Position
+}
+
+func (sn StringNode) String() string {
+  return fmt.Sprintf("%v", sn.Tok.String())
+}
+
+func (sn *StringNode) GetPosStart() Position {
+	return sn.PosStart
+}
+
+func (sn *StringNode) GetPosEnd() Position {
+	return sn.PosEnd
+}
+
+func (sn *StringNode) SetPos() *StringNode {
+  sn.PosStart = sn.Tok.PosStart
+  sn.PosEnd = sn.Tok.PosEnd
+  return sn
+}
+
 type IfNode struct {
 	Cases    [][]Node
   ElseCase Node

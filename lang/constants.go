@@ -12,6 +12,7 @@ const (
 
   IDENTIFIER    = "IDENTIFIER"
   KEYWORD       = "KEYWORD"
+  STRING        = "STRING"
   
   PLUS          = "PLUS"
   MINUS         = "MINUS"

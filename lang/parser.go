@@ -127,6 +127,11 @@ func (p *Parser) atom() *ParseResult {
 		p.advance()
     nn := &NumberNode{Tok: tok}
 		return res.success(nn.SetPos())
+	} else if tok.type_ == STRING {
+    res.register_advancement()
+		p.advance()
+    sn := &StringNode{Tok: tok}
+		return res.success(sn.SetPos())
 	} else if tok.type_ == IDENTIFIER {
     res.register_advancement()
 		p.advance()
