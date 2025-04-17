@@ -43,6 +43,7 @@ type Val interface {
   And(Val) (Val, *Error)
   Or(Val) (Val, *Error) 
   Not() (Val, *Error)
+  IsTrue() bool
   String() string
 }
 
@@ -152,8 +153,8 @@ func (v *Value) String() string {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-func NewString(value any) Val {
-  s := &String{
+func NewString(value string) Val {
+  s := &StringVal{
     value: value,
   }
   s.SetPos(nil, nil)
@@ -161,40 +162,51 @@ func NewString(value any) Val {
   return s
 }
 
-type String struct {
+type StringVal struct {
   Value
-  value any
+  value string
   Context *Context
 }
 
-func (s *String) copy() Val {
+func (s *StringVal) SetPos(PosStart, PosEnd *Position) Val {
+  s.PosStart = PosStart
+  s.PosEnd = PosEnd
+  return s
+}
+
+func (s *StringVal) SetContext(context *Context) Val {
+  s.Context = context
+  return s
+}
+
+func (s *StringVal) copy() Val {
   copy := NewString(s.value)
   copy.SetPos(s.PosStart, s.PosEnd)
   copy.SetContext(s.Context)
   return copy
 }
 
-func (s *String) Add(other Val) (Val, *Error) {
+func (s *StringVal) Add(other Val) (Val, *Error) {
   switch o := other.(type) {
-    case *String:
-      return NewString(s.value.(string)+o.value.(string)).SetContext(s.Context), nil
+    case *StringVal:
+      return NewString(s.value+o.value).SetContext(s.Context), nil
   }
   return nil, s.IllegalOperation(other)
 }
 
-func (s *String) Div(other Val) (Val, *Error) {
+func (s *StringVal) Div(other Val) (Val, *Error) {
   switch o := other.(type) {
     case *Number:
-      runes := []rune(s.value.(string))
+      runes := []rune(s.value)
       return NewString(string(runes[o.value.(int)])).SetContext(s.Context), nil
   }
   return nil, s.IllegalOperation(other)
 }
 
-func (s *String) CompEQ(other Val) (Val, *Error) {
+func (s *StringVal) CompEQ(other Val) (Val, *Error) {
   switch o := other.(type) {
-    case *String:
-      if s.value.(string) == o.value.(string) {
+    case *StringVal:
+      if s.value == o.value {
         return NewNumber(1).SetContext(s.Context), nil
       } else {
         return NewNumber(0).SetContext(s.Context), nil
@@ -203,10 +215,10 @@ func (s *String) CompEQ(other Val) (Val, *Error) {
   return nil, s.IllegalOperation(other)
 }
 
-func (s *String) CompNE(other Val) (Val, *Error) {
+func (s *StringVal) CompNE(other Val) (Val, *Error) {
   switch o := other.(type) {
-    case *String:
-      if s.value.(string) != o.value.(string) {
+    case *StringVal:
+      if s.value != o.value {
         return NewNumber(1).SetContext(s.Context), nil
       } else {
         return NewNumber(0).SetContext(s.Context), nil
@@ -215,16 +227,16 @@ func (s *String) CompNE(other Val) (Val, *Error) {
   return nil, s.IllegalOperation(other)
 }
 
-func (s *String) IsTrue() bool {
-  if len(s.value.(string)) > 0 {
-    return NumToBool(NewNumber(1).SetContext(s.Context))
+func (s *StringVal) IsTrue() bool {
+  if len(s.value) > 0 {
+    return true
   } else {
-    return NumToBool(NewNumber(0).SetContext(s.Context))
+    return false
   }
 }
 
-func (s *String) String() string {
-  return fmt.Sprintf("\"%v\"", s.value.(string))
+func (s StringVal) String() string {
+  return fmt.Sprintf("\"%v\"", s.value)
 }
 
 ///////////////////////////////////////////////////////////////////////////////

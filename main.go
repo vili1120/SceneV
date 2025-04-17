@@ -28,7 +28,7 @@ func main() {
 		  if err != nil {
 		  	fmt.Println(err.AsString())
 		  } else if result != nil {
-		  	fmt.Println(result)
+		  	fmt.Println(result.(lang.Val).String())
 		  }
     }
 	}

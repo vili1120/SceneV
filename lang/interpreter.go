@@ -58,7 +58,7 @@ func (i *Interpreter) Visit(node Node, context Context) RTResult {
 func (i *Interpreter) VisitStringNode(node *StringNode, context Context) RTResult {
   res := RTResult{}
   return res.Success(
-    NewString(node.Tok.value).SetContext(&context).SetPos(&node.PosStart, &node.PosEnd),
+    NewString(node.Tok.value.(string)).SetContext(&context).SetPos(&node.PosStart, &node.PosEnd),
   )
 }
 
@@ -80,15 +80,16 @@ func (i *Interpreter) VisitVarAccessNode(node *VarAccessNode, context Context) R
       context,
     ))
   }
-  switch value.(type) {
-    case *Number:
-      value = value.(*Number).Copy().SetPos(&node.PosStart, &node.PosEnd)
-    case *Value:
-      value = value.(*Value).SetPos(&node.PosStart, &node.PosEnd)
-    case *Function:
-      value = value.(*Function).Copy().SetPos(&node.PosStart, &node.PosEnd)
-      return res.Success(value)
-  }
+  //switch value.(type) {
+  //  case *Number:
+  //    value = value.(*Number).Copy().SetPos(&node.PosStart, &node.PosEnd)
+  //  case *Value:
+  //    value = value.(*Value).Copy().SetPos(&node.PosStart, &node.PosEnd)
+  //  case *Function:
+  //    value = value.(*Function).Copy().SetPos(&node.PosStart, &node.PosEnd)
+  //    return res.Success(value)
+  //}
+  value = value.Copy().SetPos(&node.PosStart, &node.PosEnd)
   return res.Success(value)
 }
 
@@ -112,7 +113,7 @@ func (i *Interpreter) VisitIfNode(node *IfNode, context Context) RTResult {
     if res.error != nil { return res }
     
     switch v := cond_val.(type) {
-      case *Number:
+      case Val:
         if v.IsTrue() {
           expr_val := res.Register(i.Visit(expr, context))
           if res.error != nil { return res }
@@ -230,11 +231,11 @@ func (i *Interpreter) VisitBinOpNode(node *BinOpNode, context Context) RTResult{
   right := res.Register(i.Visit(node.RightNode, context))
   if res.error != nil {return res}
 
-	leftNum, ok1 := left.(*Number)
-	rightNum, ok2 := right.(*Number)
+	leftNum, ok1 := left.(Val)
+	rightNum, ok2 := right.(Val)
 
 	if !ok1 || !ok2 {
-		panic("Operands must be numbers")
+		panic("Operands must be values")
 	}
 
   var result Val
