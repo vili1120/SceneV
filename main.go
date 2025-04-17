@@ -16,7 +16,7 @@ func input(prompt string) string {
 
 
 func main() {
-	globalSymbolTable := lang.NewSymbolTable()
+	globalSymbolTable := lang.NewSymbolTable(nil)
   globalSymbolTable.Set("null", lang.NewNumber(0))
   globalSymbolTable.Set("true", lang.NewNumber(1))
   globalSymbolTable.Set("false", lang.NewNumber(0))

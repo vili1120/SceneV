@@ -5,9 +5,10 @@ type SymbolTable struct {
 	Parent  *SymbolTable
 }
 
-func NewSymbolTable() *SymbolTable {
+func NewSymbolTable(parent *SymbolTable) *SymbolTable {
 	return &SymbolTable{
-		Symbols: map[string]Val{},
+		Symbols: make(map[string]Val),
+    Parent: parent,
 	}
 }
 

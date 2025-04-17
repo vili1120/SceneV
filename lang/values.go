@@ -538,7 +538,7 @@ func (f *Function) Execute(args []Val) (RTResult){
   interpreter := Interpreter{}
 
   newCtx := Context{DisplayName: f.Name, Parent: f.Context, ParentEntryPos: f.PosStart}
-  newCtx.SymbolTable = &SymbolTable{Parent: newCtx.Parent.SymbolTable}
+  newCtx.SymbolTable = NewSymbolTable(newCtx.Parent.SymbolTable)
 
   if len(args) > len(f.ArgNames) {
     return res.Failure(*RTError(
